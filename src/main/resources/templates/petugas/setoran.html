@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="layout">
+<head>
+    <title>Input Setoran Sampah</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <h4 class="page-title">Input Setoran Sampah</h4>
+
+        <div class="card">
+            <div class="card-body">
+                <form th:action="@{/petugas/setoran/simpan}" method="post">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="warga" class="form-label">Warga</label>
+                            <select id="warga" name="wargaId" class="form-select" required>
+                                <option value="">-- Pilih Warga --</option>
+                                <option th:each="w : ${wargaList}" th:value="${w.id}" th:text="${w.nama + ' (' + w.username + ')'}">Budi</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="kategori" class="form-label">Kategori Sampah</label>
+                            <select id="kategori" name="kategoriId" class="form-select" required>
+                                <option value="">-- Pilih Kategori --</option>
+                                <option th:each="k : ${kategoriList}" th:value="${k.id}" th:text="${k.nama}">ORGANIK</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="berat" class="form-label">Berat (kg)</label>
+                            <input type="number" id="berat" name="beratKg" class="form-control" step="0.1" min="0.1" placeholder="Contoh: 5.0" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="catatan" class="form-label">Catatan</label>
+                            <textarea id="catatan" name="catatan" class="form-control" placeholder="Catatan tambahan (opsional)"></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-4 d-flex gap-2">
+                        <a th:href="@{/petugas/dashboard}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Kembali
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Simpan Setoran
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

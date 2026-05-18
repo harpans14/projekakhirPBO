@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="layout">
+<head>
+    <title>Dashboard Admin</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <h4 class="page-title">Dashboard Admin</h4>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card stat-card-green fade-in">
+                    <div>
+                        <div class="stat-card-number" th:text="${totalWarga}">0</div>
+                        <div class="stat-card-label">Total Warga</div>
+                    </div>
+                    <i class="fas fa-users stat-card-icon"></i>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-blue fade-in">
+                    <div>
+                        <div class="stat-card-number" th:text="${totalPetugas}">0</div>
+                        <div class="stat-card-label">Total Petugas</div>
+                    </div>
+                    <i class="fas fa-user-tie stat-card-icon"></i>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-orange fade-in">
+                    <div>
+                        <div class="stat-card-number" th:text="${setoranHariIni}">0</div>
+                        <div class="stat-card-label">Setoran Hari Ini</div>
+                    </div>
+                    <i class="fas fa-box stat-card-icon"></i>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card stat-card-green fade-in">
+                    <div>
+                        <div class="stat-card-number" th:text="${totalSampah}">0</div>
+                        <div class="stat-card-label">Total Sampah (kg)</div>
+                    </div>
+                    <i class="fas fa-recycle stat-card-icon"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">Grafik Setoran per Bulan</div>
+                    <div class="card-body">
+                        <canvas id="chartSetoranBulanan" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">Sampah per Kategori</div>
+                    <div class="card-body">
+                        <canvas id="chartKategori" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">5 Setoran Terakhir</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Warga</th>
+                                <th>Kategori</th>
+                                <th>Berat (kg)</th>
+                                <th>Status</th>
+                                <th>Tanggal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="s, stat : ${recentSetoran}">
+                                <td th:text="${stat.count}">1</td>
+                                <td th:text="${s.warga.nama}">Budi</td>
+                                <td th:text="${s.kategori.nama}">ORGANIK</td>
+                                <td th:text="${s.beratKg}">5.0</td>
+                                <td>
+                                    <span class="badge"
+                                          th:classappend="${s.status.name() == 'DITERIMA'} ? 'bg-success' : (${s.status.name() == 'MENUNGGU'} ? 'bg-warning' : 'bg-danger')"
+                                          th:text="${s.status.name()}">DITERIMA</span>
+                                </td>
+                                <td th:text="${#temporals.format(s.createdAt, 'dd-MM-yyyy')}">2024-01-01</td>
+                            </tr>
+                            <tr th:if="${recentSetoran == null or #lists.isEmpty(recentSetoran)}">
+                                <td colspan="6" class="text-center text-muted py-4">Belum ada data setoran</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const labelsSetoran = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const dataSetoran = [12, 19, 15, 22, 18, 25, 30, 28, 24, 20, 16, 23];
+        var ctxBulanan = document.getElementById('chartSetoranBulanan');
+        if (ctxBulanan) {
+            new Chart(ctxBulanan, {
+                type: 'bar',
+                data: {
+                    labels: labelsSetoran,
+                    datasets: [{
+                        label: 'Jumlah Setoran',
+                        data: dataSetoran,
+                        backgroundColor: '#2ecc71',
+                        borderColor: '#27ae60',
+                        borderWidth: 1,
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 5 } } }
+                }
+            });
+        }
+        var ctxKategori = document.getElementById('chartKategori');
+        if (ctxKategori) {
+            new Chart(ctxKategori, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Organik', 'Anorganik', 'B3'],
+                    datasets: [{
+                        data: [55, 30, 15],
+                        backgroundColor: ['#2ecc71', '#3498db', '#e74c3c'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+        /*]]>*/
+    </script>
+</body>
+</html>

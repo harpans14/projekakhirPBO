@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="layout">
+<head>
+    <title>Verifikasi Setoran</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <h4 class="page-title">Verifikasi Setoran</h4>
+
+        <div class="card">
+            <div class="card-header bg-soft-warning">
+                <i class="fas fa-clock me-2"></i>Setoran Menunggu Verifikasi
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Warga</th>
+                                <th>Kategori</th>
+                                <th>Berat (kg)</th>
+                                <th>Tanggal</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="s, stat : ${setoranList}">
+                                <td th:text="${stat.count}">1</td>
+                                <td th:text="${s.warga.nama}">Budi</td>
+                                <td th:text="${s.kategori.nama}">ORGANIK</td>
+                                <td th:text="${s.beratKg}">5.0</td>
+                                <td th:text="${#temporals.format(s.createdAt, 'dd-MM-yyyy')}">2024-01-01</td>
+                                <td>
+                                    <form th:action="@{/petugas/verifikasi/{id}(id=${s.id})}" method="post" style="display:inline;">
+                                        <input type="hidden" name="status" value="DITERIMA">
+                                        <button type="submit" class="btn btn-sm btn-success">
+                                            <i class="fas fa-check me-1"></i>Terima
+                                        </button>
+                                    </form>
+                                    <form th:action="@{/petugas/verifikasi/{id}(id=${s.id})}" method="post" style="display:inline;">
+                                        <input type="hidden" name="status" value="DITOLAK">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-times me-1"></i>Tolak
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr th:if="${setoranList == null or #lists.isEmpty(setoranList)}">
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="fas fa-check-circle fa-2x mb-2 d-block"></i>
+                                    Tidak ada setoran yang menunggu verifikasi
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
