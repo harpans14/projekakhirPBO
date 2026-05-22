@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="layout">
+<head>
+    <title>Buat Laporan Sampah</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <h4 class="page-title">Buat Laporan Sampah</h4>
+
+        <div class="alert alert-info fade-in mb-4">
+            <i class="fas fa-info-circle me-2"></i>
+            Silakan isi form di bawah untuk melaporkan setoran sampah Anda. Laporan akan diverifikasi oleh petugas.
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-edit me-2"></i>Form Laporan Setoran
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/warga/laporan/simpan}" method="post">
+                            <div class="mb-3">
+                                <label for="kategoriId" class="form-label">Jenis Sampah <span class="text-danger">*</span></label>
+                                <select class="form-select" id="kategoriId" name="kategoriId" required>
+                                    <option value="">-- Pilih Jenis Sampah --</option>
+                                    <option th:each="k : ${listKategori}"
+                                            th:value="${k.id}"
+                                            th:text="${k.nama} + ' - Rp ' + ${k.hargaPerKg} + '/kg'">
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="beratKg" class="form-label">Estimasi Berat (Kg) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="beratKg" name="beratKg"
+                                       step="0.1" min="0.1" required
+                                       placeholder="Contoh: 2.5">
+                                <div class="form-text">Masukkan perkiraan berat sampah dalam kilogram.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="alamatJemput" class="form-label">Alamat Penjemputan</label>
+                                <textarea class="form-control" id="alamatJemput" name="alamatJemput"
+                                          rows="3" th:text="${alamat}">Alamat warga</textarea>
+                                <div class="form-text">Alamat akan diisi otomatis dari profil Anda. Bisa diubah jika perlu.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="catatanTambahan" class="form-label">Catatan Tambahan</label>
+                                <textarea class="form-control" id="catatanTambahan" name="catatanTambahan"
+                                          rows="2" placeholder="Misal: sampah ada di depan pagar, tolong dijemput jam 10 pagi"></textarea>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-paper-plane me-1"></i>Kirim Laporan
+                                </button>
+                                <a th:href="@{/warga/dashboard}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-1"></i>Batal
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-info-circle me-2"></i>Informasi
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Setelah dikirim, laporan akan masuk ke petugas untuk diverifikasi.
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-clock text-warning me-2"></i>
+                                Status awal laporan adalah <strong>MENUNGGU</strong>.
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Jika diterima, sampah akan dijemput oleh petugas.
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-times-circle text-danger me-2"></i>
+                                Jika ditolak, Anda akan mendapat catatan penolakan.
+                            </li>
+                            <li>
+                                <i class="fas fa-history text-info me-2"></i>
+                                Status laporan bisa dicek di menu 
+                                <a th:href="@{/warga/riwayat}">Riwayat</a>.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

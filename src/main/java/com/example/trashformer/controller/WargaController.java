@@ -1,5 +1,6 @@
 package com.example.trashformer.controller;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.security.core.Authentication;
@@ -12,10 +13,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.example.trashformer.model.KategoriSampah;
 import com.example.trashformer.model.Role;
 import com.example.trashformer.model.SetoranSampah;
 import com.example.trashformer.model.SetoranUang;
 import com.example.trashformer.model.User;
+import com.example.trashformer.repository.KategoriSampahRepository;
 import com.example.trashformer.repository.SetoranSampahRepository;
 import com.example.trashformer.repository.SetoranUangRepository;
 import com.example.trashformer.repository.UserRepository;
@@ -32,19 +35,22 @@ public class WargaController {
     private final SetoranUangRepository setoranUangRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final KategoriSampahRepository kategoriSampahRepository;
 
     public WargaController(UserService userService,
                            SetoranService setoranService,
                            SetoranSampahRepository setoranSampahRepository,
                            SetoranUangRepository setoranUangRepository,
                            PasswordEncoder passwordEncoder,
-                           UserRepository userRepository) {
+                           UserRepository userRepository,
+                           KategoriSampahRepository kategoriSampahRepository) {
         this.userService = userService;
         this.setoranService = setoranService;
         this.setoranSampahRepository = setoranSampahRepository;
         this.setoranUangRepository = setoranUangRepository;
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
+        this.kategoriSampahRepository = kategoriSampahRepository;
     }
 
     private void addUserToModel(Authentication authentication, Model model) {
@@ -168,5 +174,55 @@ public class WargaController {
             model.addAttribute("setoranUangList", setoranService.getSetoranUangByWarga(warga.getId()));
         }
         return "warga/riwayat";
+    }
+
+    @GetMapping("/laporan")
+    public String laporanForm(Authentication authentication, Model model) {
+        addUserToModel(authentication, model);
+        User warga = getCurrentUser(authentication);
+        if (warga != null) {
+            model.addAttribute("alamat", warga.getAlamat() != null ? warga.getAlamat() : "");
+        }
+        List<KategoriSampah> kategoriList = kategoriSampahRepository.findAll();
+        model.addAttribute("listKategori", kategoriList);
+        return "warga/laporan";
+    }
+
+    @PostMapping("/laporan/simpan")
+    public String laporanSimpan(@RequestParam Long kategoriId,
+                                @RequestParam BigDecimal beratKg,
+                                @RequestParam(required = false) String alamatJemput,
+                                @RequestParam(required = false) String catatanTambahan,
+                                Authentication authentication,
+                                RedirectAttributes redirectAttrs) {
+        try {
+            User warga = getCurrentUser(authentication);
+            if (warga == null) {
+                redirectAttrs.addFlashAttribute("error", "User tidak ditemukan");
+                return "redirect:/warga/laporan";
+            }
+
+            StringBuilder catatan = new StringBuilder();
+            if (alamatJemput != null && !alamatJemput.trim().isEmpty()) {
+                catatan.append("Alamat: ").append(alamatJemput.trim());
+            }
+            if (catatanTambahan != null && !catatanTambahan.trim().isEmpty()) {
+                if (catatan.length() > 0) catatan.append(" | ");
+                catatan.append("Catatan: ").append(catatanTambahan.trim());
+            }
+
+            setoranService.createSetoranSampah(
+                    warga.getId(),
+                    kategoriId,
+                    beratKg,
+                    catatan.length() > 0 ? catatan.toString() : null
+            );
+
+            redirectAttrs.addFlashAttribute("success", "Laporan setoran berhasil dikirim, menunggu verifikasi petugas");
+            return "redirect:/warga/dashboard?suksesLaporan";
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "Gagal mengirim laporan: " + e.getMessage());
+            return "redirect:/warga/laporan";
+        }
     }
 }

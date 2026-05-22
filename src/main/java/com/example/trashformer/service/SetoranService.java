@@ -152,4 +152,12 @@ public class SetoranService {
 
         return stats;
     }
+
+    public List<Object[]> getBeratPerKategori() {
+        return setoranSampahRepository.sumBeratPerKategori();
+    }
+
+    public List<Object[]> getJumlahSetoranPerBulan(int year) {
+        return setoranSampahRepository.countSetoranPerBulan(year);
+    }
 }
