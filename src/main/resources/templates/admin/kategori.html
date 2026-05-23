@@ -12,6 +12,16 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
+        <div th:if="${!#strings.isEmpty(success)}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i><span th:text="${success}">Sukses</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div th:if="${!#strings.isEmpty(error)}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i><span th:text="${error}">Error</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
         <div class="row g-4">
             <div class="col-lg-5">
                 <div class="card">
@@ -54,6 +64,7 @@
                                         <th>Nama Kategori</th>
                                         <th>Harga per Kg</th>
                                         <th>Dibuat</th>
+                                        <th>Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -67,9 +78,18 @@
                                             <span class="text-muted" th:if="${k.hargaPerKg == null}">-</span>
                                         </td>
                                         <td th:text="${#temporals.format(k.createdAt, 'dd-MM-yyyy HH:mm')}">01-01-2024</td>
+                                        <td>
+                                            <a th:href="@{/admin/kategori/edit/{id}(id=${k.id})}" class="btn btn-sm btn-warning me-1" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a th:href="@{/admin/kategori/hapus/{id}(id=${k.id})}" class="btn btn-sm btn-danger btn-delete-confirm"
+                                               title="Hapus">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </td>
                                     </tr>
                                     <tr th:if="${#lists.isEmpty(listKategori)}">
-                                        <td colspan="4" class="text-center text-muted py-4">
+                                        <td colspan="5" class="text-center text-muted py-4">
                                             <i class="fas fa-inbox me-2"></i>Belum ada kategori sampah
                                         </td>
                                     </tr>

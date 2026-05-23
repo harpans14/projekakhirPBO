@@ -257,4 +257,50 @@ public class AdminController {
         }
         return "redirect:/admin/kategori?suksesTambah";
     }
+
+    @GetMapping("/kategori/edit/{id}")
+    public String editKategori(@PathVariable Long id, Authentication authentication, Model model) {
+        addUserToModel(authentication, model);
+        KategoriSampah kategori = kategoriSampahRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Kategori tidak ditemukan"));
+        model.addAttribute("kategori", kategori);
+        return "admin/kategori-form";
+    }
+
+    @PostMapping("/kategori/update")
+    public String updateKategori(@RequestParam Long id,
+                                  @RequestParam String namaKategori,
+                                  @RequestParam(required = false) BigDecimal hargaPerKg,
+                                  RedirectAttributes redirectAttrs) {
+        String namaTrim = namaKategori.trim();
+        if (namaTrim.isEmpty()) {
+            redirectAttrs.addFlashAttribute("error", "Nama kategori harus diisi");
+            return "redirect:/admin/kategori/edit/" + id;
+        }
+
+        try {
+            KategoriSampah kategori = kategoriSampahRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Kategori tidak ditemukan"));
+            kategori.setNama(namaTrim);
+            kategori.setHargaPerKg(hargaPerKg);
+            kategoriSampahRepository.save(kategori);
+            redirectAttrs.addFlashAttribute("success", "Kategori berhasil diperbarui");
+        } catch (DataIntegrityViolationException e) {
+            redirectAttrs.addFlashAttribute("error", "Kategori dengan nama tersebut sudah ada");
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "Gagal memperbarui kategori");
+        }
+        return "redirect:/admin/kategori";
+    }
+
+    @GetMapping("/kategori/hapus/{id}")
+    public String hapusKategori(@PathVariable Long id, RedirectAttributes redirectAttrs) {
+        try {
+            kategoriSampahRepository.deleteById(id);
+            redirectAttrs.addFlashAttribute("success", "Kategori berhasil dihapus");
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "Gagal menghapus kategori");
+        }
+        return "redirect:/admin/kategori";
+    }
 }

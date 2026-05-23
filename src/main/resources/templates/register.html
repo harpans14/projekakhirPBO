@@ -21,7 +21,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-        <form th:action="@{/register/save}" method="post">
+        <form th:action="@{/register/save}" method="post" onsubmit="return validateForm()">
             <div class="mb-3">
                 <label for="nama" class="form-label">Nama Lengkap</label>
                 <input type="text" id="nama" name="nama" class="form-control" placeholder="Masukkan nama lengkap" required minlength="3">
@@ -32,7 +32,28 @@
             </div>
             <div class="mb-3">
                 <label for="password" class="form-label">Password</label>
-                <input type="password" id="password" name="password" class="form-control" placeholder="Minimal 6 karakter" required minlength="6">
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Buat password" required minlength="8" onkeyup="checkPassword()">
+                    <button type="button" class="password-toggle" onclick="togglePassword('password', this)" tabindex="-1">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="strength-meter mt-2" id="strengthMeter">
+                    <div class="strength-bar">
+                        <div class="strength-bar-fill" id="strengthFill"></div>
+                    </div>
+                    <div class="strength-label" id="strengthLabel"></div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="confirmPassword" class="form-label">Konfirmasi Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="confirmPassword" class="form-control" placeholder="Ulangi password" required onkeyup="checkMatch()">
+                    <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)" tabindex="-1">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <small id="matchMsg" class="form-text"></small>
             </div>
             <button type="submit" class="btn btn-primary w-100">
                 <i class="fas fa-user-plus me-2"></i>Daftar
@@ -45,5 +66,98 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function togglePassword(inputId, btn) {
+            var input = document.getElementById(inputId);
+            var icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function checkPassword() {
+            var pw = document.getElementById('password').value;
+
+            var score = 0;
+            if (pw.length >= 8) score++;
+            if (/[A-Z]/.test(pw)) score++;
+            if (/[0-9]/.test(pw)) score++;
+
+            var fill = document.getElementById('strengthFill');
+            var label = document.getElementById('strengthLabel');
+
+            if (pw.length === 0) {
+                fill.style.width = '0%';
+                fill.className = 'strength-bar-fill';
+                label.innerHTML = '';
+                checkMatch();
+                return;
+            }
+
+            var pct = (score / 3) * 100;
+            fill.style.width = pct + '%';
+
+            if (score === 1) {
+                fill.className = 'strength-bar-fill weak';
+                label.innerHTML = '<span class="text-danger fw-semibold"><i class="fas fa-shield-alt me-1"></i>Weak</span>';
+            } else if (score === 2) {
+                fill.className = 'strength-bar-fill medium';
+                label.innerHTML = '<span class="text-warning fw-semibold"><i class="fas fa-shield-alt me-1"></i>Medium</span>';
+            } else if (score === 3) {
+                fill.className = 'strength-bar-fill strong';
+                label.innerHTML = '<span class="text-success fw-semibold"><i class="fas fa-shield-alt me-1"></i>Strong</span>';
+            } else {
+                fill.className = 'strength-bar-fill';
+                label.innerHTML = '<span class="text-muted fw-semibold"><i class="fas fa-shield-alt me-1"></i>Too weak</span>';
+            }
+
+            checkMatch();
+        }
+
+        function checkMatch() {
+            var pw = document.getElementById('password').value;
+            var cpw = document.getElementById('confirmPassword').value;
+            var msg = document.getElementById('matchMsg');
+
+            if (cpw.length === 0) {
+                msg.innerHTML = '';
+                return;
+            }
+            if (pw === cpw) {
+                msg.innerHTML = '<span class="text-success"><i class="fas fa-check-circle"></i> Password cocok</span>';
+            } else {
+                msg.innerHTML = '<span class="text-danger"><i class="fas fa-exclamation-circle"></i> Password tidak cocok</span>';
+            }
+        }
+
+        function validateForm() {
+            var pw = document.getElementById('password').value;
+            var cpw = document.getElementById('confirmPassword').value;
+
+            if (pw.length < 8) {
+                alert('Password minimal 8 karakter');
+                return false;
+            }
+            if (!/[A-Z]/.test(pw)) {
+                alert('Password harus mengandung huruf besar');
+                return false;
+            }
+            if (!/[0-9]/.test(pw)) {
+                alert('Password harus mengandung angka');
+                return false;
+            }
+            if (pw !== cpw) {
+                alert('Konfirmasi password tidak cocok');
+                return false;
+            }
+            return true;
+        }
+    </script>
 </body>
 </html>
