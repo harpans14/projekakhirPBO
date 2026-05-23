@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.example.trashformer.model.SetoranSampah;
+import com.example.trashformer.model.StatusPembayaran;
+import com.example.trashformer.model.StatusPenjemputan;
 import com.example.trashformer.model.StatusSetoran;
 
 public interface SetoranSampahRepository extends JpaRepository<SetoranSampah, Long> {
@@ -20,7 +22,13 @@ public interface SetoranSampahRepository extends JpaRepository<SetoranSampah, Lo
 
     List<SetoranSampah> findByPetugasIdOrderByCreatedAtDesc(Long petugasId);
 
+    List<SetoranSampah> findByStatusPembayaranOrderByCreatedAtDesc(StatusPembayaran statusPembayaran);
+
     long countByStatus(StatusSetoran status);
+
+    long countByStatusPembayaran(StatusPembayaran statusPembayaran);
+
+    long countByStatusPenjemputan(StatusPenjemputan statusPenjemputan);
 
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 

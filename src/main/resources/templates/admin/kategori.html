@@ -26,6 +26,13 @@
                                        placeholder="Contoh: Plastik, Kertas, Organik" required>
                                 <div class="form-text">Masukkan nama jenis sampah baru.</div>
                             </div>
+                            <div class="mb-3">
+                                <label for="hargaPerKg" class="form-label">Harga per Kg (Rp) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="hargaPerKg" name="hargaPerKg"
+                                       step="100" min="0" required
+                                       placeholder="Contoh: 5000">
+                                <div class="form-text">Harga pembelian per kilogram untuk kategori ini.</div>
+                            </div>
                             <button type="submit" class="btn btn-success">
                                 <i class="fas fa-save me-1"></i>Simpan
                             </button>
@@ -45,6 +52,7 @@
                                     <tr>
                                         <th>No</th>
                                         <th>Nama Kategori</th>
+                                        <th>Harga per Kg</th>
                                         <th>Dibuat</th>
                                     </tr>
                                 </thead>
@@ -52,10 +60,16 @@
                                     <tr th:each="k, stat : ${listKategori}">
                                         <td th:text="${stat.count}">1</td>
                                         <td th:text="${k.nama}">Organik</td>
+                                        <td>
+                                            <span class="badge bg-success" th:if="${k.hargaPerKg != null}">
+                                                Rp <span th:text="${k.hargaPerKg}">5.000</span>/kg
+                                            </span>
+                                            <span class="text-muted" th:if="${k.hargaPerKg == null}">-</span>
+                                        </td>
                                         <td th:text="${#temporals.format(k.createdAt, 'dd-MM-yyyy HH:mm')}">01-01-2024</td>
                                     </tr>
                                     <tr th:if="${#lists.isEmpty(listKategori)}">
-                                        <td colspan="3" class="text-center text-muted py-4">
+                                        <td colspan="4" class="text-center text-muted py-4">
                                             <i class="fas fa-inbox me-2"></i>Belum ada kategori sampah
                                         </td>
                                     </tr>

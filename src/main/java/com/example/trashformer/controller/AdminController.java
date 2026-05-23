@@ -1,5 +1,6 @@
 package com.example.trashformer.controller;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -233,7 +234,8 @@ public class AdminController {
 
     @PostMapping("/kategori/simpan")
     public String simpanKategori(@RequestParam String namaKategori,
-                                 RedirectAttributes redirectAttrs) {
+                                  @RequestParam(required = false) BigDecimal hargaPerKg,
+                                  RedirectAttributes redirectAttrs) {
         String namaTrim = namaKategori.trim();
         if (namaTrim.isEmpty()) {
             redirectAttrs.addFlashAttribute("error", "Nama kategori harus diisi");
@@ -243,6 +245,9 @@ public class AdminController {
         try {
             KategoriSampah kategori = new KategoriSampah();
             kategori.setNama(namaTrim);
+            if (hargaPerKg != null) {
+                kategori.setHargaPerKg(hargaPerKg);
+            }
             kategoriSampahRepository.save(kategori);
             redirectAttrs.addFlashAttribute("success", "Kategori berhasil ditambahkan");
         } catch (DataIntegrityViolationException e) {
