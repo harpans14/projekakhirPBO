@@ -21,12 +21,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.trashformer.model.KategoriSampah;
-import com.example.trashformer.model.SetoranSampah;
-import com.example.trashformer.model.SetoranUang;
+import com.example.trashformer.model.Setoran;
 import com.example.trashformer.model.User;
 import com.example.trashformer.repository.KategoriSampahRepository;
-import com.example.trashformer.repository.SetoranSampahRepository;
-import com.example.trashformer.repository.SetoranUangRepository;
+import com.example.trashformer.repository.SetoranRepository;
 import com.example.trashformer.repository.UserRepository;
 import com.example.trashformer.service.SetoranService;
 import com.example.trashformer.service.UserService;
@@ -37,8 +35,7 @@ public class WargaController {
 
     private final UserService userService;
     private final SetoranService setoranService;
-    private final SetoranSampahRepository setoranSampahRepository;
-    private final SetoranUangRepository setoranUangRepository;
+    private final SetoranRepository setoranRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final KategoriSampahRepository kategoriSampahRepository;
@@ -48,15 +45,13 @@ public class WargaController {
 
     public WargaController(UserService userService,
                            SetoranService setoranService,
-                           SetoranSampahRepository setoranSampahRepository,
-                           SetoranUangRepository setoranUangRepository,
+                           SetoranRepository setoranRepository,
                            PasswordEncoder passwordEncoder,
                            UserRepository userRepository,
                            KategoriSampahRepository kategoriSampahRepository) {
         this.userService = userService;
         this.setoranService = setoranService;
-        this.setoranSampahRepository = setoranSampahRepository;
-        this.setoranUangRepository = setoranUangRepository;
+        this.setoranRepository = setoranRepository;
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
         this.kategoriSampahRepository = kategoriSampahRepository;
@@ -83,23 +78,29 @@ public class WargaController {
         User warga = getCurrentUser(authentication);
         if (warga != null) {
             Long wargaId = warga.getId();
-            List<SetoranSampah> sampahList = setoranSampahRepository.findByWargaIdOrderByCreatedAtDesc(wargaId);
-            List<SetoranUang> uangList = setoranUangRepository.findByWargaIdOrderByCreatedAtDesc(wargaId);
+            List<Setoran> allSetoran = setoranRepository.findByWargaIdOrderByCreatedAtDesc(wargaId);
+
+            List<Setoran> sampahList = allSetoran.stream()
+                    .filter(s -> s.getJenisSetoran() == com.example.trashformer.model.JenisSetoran.SAMPAH)
+                    .toList();
+            List<Setoran> uangList = allSetoran.stream()
+                    .filter(s -> s.getJenisSetoran() == com.example.trashformer.model.JenisSetoran.UANG)
+                    .toList();
 
             double totalBerat = sampahList.stream()
                     .mapToDouble(s -> s.getBeratKg() != null ? s.getBeratKg().doubleValue() : 0.0)
                     .sum();
 
             double totalUangDisetor = uangList.stream()
-                    .filter(u -> "SETORAN".equals(u.getJenis()))
-                    .mapToDouble(u -> u.getJumlah() != null ? u.getJumlah().doubleValue() : 0.0)
+                    .filter(u -> "SETORAN".equals(u.getJenisUang()))
+                    .mapToDouble(u -> u.getJumlahUang() != null ? u.getJumlahUang().doubleValue() : 0.0)
                     .sum();
 
             model.addAttribute("totalSampah", (long) totalBerat);
             model.addAttribute("totalSetoran", sampahList.size());
             model.addAttribute("totalUang", (long) totalUangDisetor);
 
-            List<SetoranSampah> recent = sampahList.size() > 5 ? sampahList.subList(0, 5) : sampahList;
+            List<Setoran> recent = sampahList.size() > 5 ? sampahList.subList(0, 5) : sampahList;
             model.addAttribute("recentSetoran", recent);
         }
         return "warga/dashboard";
@@ -179,8 +180,15 @@ public class WargaController {
         addUserToModel(authentication, model);
         User warga = getCurrentUser(authentication);
         if (warga != null) {
-            model.addAttribute("setoranList", setoranService.getSetoranByWarga(warga.getId()));
-            model.addAttribute("setoranUangList", setoranService.getSetoranUangByWarga(warga.getId()));
+            List<Setoran> allSetoran = setoranRepository.findByWargaIdOrderByCreatedAtDesc(warga.getId());
+            List<Setoran> sampahList = allSetoran.stream()
+                    .filter(s -> s.getJenisSetoran() == com.example.trashformer.model.JenisSetoran.SAMPAH)
+                    .toList();
+            List<Setoran> uangList = allSetoran.stream()
+                    .filter(s -> s.getJenisSetoran() == com.example.trashformer.model.JenisSetoran.UANG)
+                    .toList();
+            model.addAttribute("setoranList", sampahList);
+            model.addAttribute("setoranUangList", uangList);
         }
         return "warga/riwayat";
     }

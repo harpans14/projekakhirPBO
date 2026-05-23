@@ -35,8 +35,8 @@
                             <tr th:each="su, stat : ${setoranUangList}">
                                 <td th:text="${stat.count}">1</td>
                                 <td th:text="${su.warga.nama}">Budi</td>
-                                <td th:text="${su.jenis}">Donasi</td>
-                                <td th:text="${su.jumlah}">Rp 50.000</td>
+                                <td th:text="${su.jenisUang}">Donasi</td>
+                                <td th:text="${su.jumlahUang}">Rp 50.000</td>
                                 <td th:text="${su.deskripsi}">Pembayaran sampah</td>
                                 <td th:text="${su.petugas != null ? su.petugas.nama : '-'}">Petugas</td>
                                 <td th:text="${#temporals.format(su.createdAt, 'dd-MM-yyyy')}">2024-01-01</td>

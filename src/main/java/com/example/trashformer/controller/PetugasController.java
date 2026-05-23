@@ -15,13 +15,13 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.trashformer.model.KategoriSampah;
 import com.example.trashformer.model.Role;
-import com.example.trashformer.model.SetoranSampah;
+import com.example.trashformer.model.Setoran;
 import com.example.trashformer.model.StatusPembayaran;
 import com.example.trashformer.model.StatusPenjemputan;
 import com.example.trashformer.model.StatusSetoran;
 import com.example.trashformer.model.User;
 import com.example.trashformer.repository.KategoriSampahRepository;
-import com.example.trashformer.repository.SetoranSampahRepository;
+import com.example.trashformer.repository.SetoranRepository;
 import com.example.trashformer.service.SetoranService;
 import com.example.trashformer.service.UserService;
 
@@ -32,16 +32,16 @@ public class PetugasController {
     private final UserService userService;
     private final SetoranService setoranService;
     private final KategoriSampahRepository kategoriSampahRepository;
-    private final SetoranSampahRepository setoranSampahRepository;
+    private final SetoranRepository setoranRepository;
 
     public PetugasController(UserService userService,
                              SetoranService setoranService,
                              KategoriSampahRepository kategoriSampahRepository,
-                             SetoranSampahRepository setoranSampahRepository) {
+                             SetoranRepository setoranRepository) {
         this.userService = userService;
         this.setoranService = setoranService;
         this.kategoriSampahRepository = kategoriSampahRepository;
-        this.setoranSampahRepository = setoranSampahRepository;
+        this.setoranRepository = setoranRepository;
     }
 
     private void addUserToModel(Authentication authentication, Model model) {
@@ -64,23 +64,23 @@ public class PetugasController {
         addUserToModel(authentication, model);
         User petugas = getCurrentUser(authentication);
         if (petugas != null) {
-            List<SetoranSampah> allByPetugas = setoranService.getSetoranByPetugas(petugas.getId());
+            List<Setoran> allByPetugas = setoranService.getSetoranByPetugas(petugas.getId());
             long totalVerified = allByPetugas.size();
-            long totalMenunggu = setoranSampahRepository.countByStatus(StatusSetoran.MENUNGGU);
+            long totalMenunggu = setoranRepository.countByStatus(StatusSetoran.MENUNGGU);
             double totalBerat = allByPetugas.stream()
                     .filter(s -> s.getStatus() == StatusSetoran.DITERIMA)
                     .mapToDouble(s -> s.getBeratKg() != null ? s.getBeratKg().doubleValue() : 0.0)
                     .sum();
 
-            long pembayaranMenunggu = setoranSampahRepository.countByStatusPembayaran(StatusPembayaran.MENUNGGU_VERIFIKASI);
+            long pembayaranMenunggu = setoranRepository.countByStatusPembayaran(StatusPembayaran.MENUNGGU_VERIFIKASI);
 
             model.addAttribute("setoranHariIni", totalMenunggu + totalVerified);
             model.addAttribute("wargaDibantu", totalVerified);
             model.addAttribute("totalSampah", (long) totalBerat);
             model.addAttribute("pembayaranMenunggu", pembayaranMenunggu);
 
-            List<SetoranSampah> allSetoran = setoranService.getAllSetoranSampah();
-            List<SetoranSampah> recent = allSetoran.size() > 5 ? allSetoran.subList(0, 5) : allSetoran;
+            List<Setoran> allSetoran = setoranService.getAllSetoranSampah();
+            List<Setoran> recent = allSetoran.size() > 5 ? allSetoran.subList(0, 5) : allSetoran;
             model.addAttribute("recentSetoran", recent);
         }
         return "petugas/dashboard";
@@ -127,7 +127,7 @@ public class PetugasController {
                 return "redirect:/petugas/setoran";
             }
 
-            SetoranSampah setoran = setoranService.createSetoranSampah(wargaId, kategoriId, beratKg, catatan);
+            Setoran setoran = setoranService.createSetoranSampah(wargaId, kategoriId, beratKg, catatan);
             setoranService.verifikasiSetoran(setoran.getId(), petugas.getId(), StatusSetoran.DITERIMA, catatan);
 
             redirectAttrs.addFlashAttribute("success", "Setoran berhasil disimpan dan diverifikasi");

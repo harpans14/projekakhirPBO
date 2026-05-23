@@ -10,43 +10,40 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import com.example.trashformer.model.JenisSetoran;
 import com.example.trashformer.model.KategoriSampah;
-import com.example.trashformer.model.SetoranSampah;
-import com.example.trashformer.model.SetoranUang;
+import com.example.trashformer.model.Setoran;
 import com.example.trashformer.model.StatusPembayaran;
 import com.example.trashformer.model.StatusPenjemputan;
 import com.example.trashformer.model.StatusSetoran;
 import com.example.trashformer.model.User;
 import com.example.trashformer.repository.KategoriSampahRepository;
-import com.example.trashformer.repository.SetoranSampahRepository;
-import com.example.trashformer.repository.SetoranUangRepository;
+import com.example.trashformer.repository.SetoranRepository;
 import com.example.trashformer.repository.UserRepository;
 
 @Service
 public class SetoranService {
 
-    private final SetoranSampahRepository setoranSampahRepository;
-    private final SetoranUangRepository setoranUangRepository;
+    private final SetoranRepository setoranRepository;
     private final KategoriSampahRepository kategoriSampahRepository;
     private final UserRepository userRepository;
 
-    public SetoranService(SetoranSampahRepository setoranSampahRepository,
-                          SetoranUangRepository setoranUangRepository,
+    public SetoranService(SetoranRepository setoranRepository,
                           KategoriSampahRepository kategoriSampahRepository,
                           UserRepository userRepository) {
-        this.setoranSampahRepository = setoranSampahRepository;
-        this.setoranUangRepository = setoranUangRepository;
+        this.setoranRepository = setoranRepository;
         this.kategoriSampahRepository = kategoriSampahRepository;
         this.userRepository = userRepository;
     }
 
-    public SetoranSampah createSetoranSampah(Long wargaId, Long kategoriId, BigDecimal beratKg, String catatan) {
+    public Setoran createSetoranSampah(Long wargaId, Long kategoriId, BigDecimal beratKg, String catatan) {
         User warga = userRepository.findById(wargaId)
                 .orElseThrow(() -> new RuntimeException("Warga tidak ditemukan"));
         KategoriSampah kategori = kategoriSampahRepository.findById(kategoriId)
                 .orElseThrow(() -> new RuntimeException("Kategori tidak ditemukan"));
 
-        SetoranSampah setoran = new SetoranSampah();
+        Setoran setoran = new Setoran();
+        setoran.setJenisSetoran(JenisSetoran.SAMPAH);
         setoran.setWarga(warga);
         setoran.setKategori(kategori);
         setoran.setBeratKg(beratKg);
@@ -60,17 +57,18 @@ public class SetoranService {
             setoran.setCatatan(catatan.trim());
         }
 
-        return setoranSampahRepository.save(setoran);
+        return setoranRepository.save(setoran);
     }
 
-    public SetoranSampah createSetoranSampahWarga(Long wargaId, Long kategoriId, BigDecimal beratKg,
-                                                   String alamatJemput, String catatan, String buktiPembayaran) {
+    public Setoran createSetoranSampahWarga(Long wargaId, Long kategoriId, BigDecimal beratKg,
+                                             String alamatJemput, String catatan, String buktiPembayaran) {
         User warga = userRepository.findById(wargaId)
                 .orElseThrow(() -> new RuntimeException("Warga tidak ditemukan"));
         KategoriSampah kategori = kategoriSampahRepository.findById(kategoriId)
                 .orElseThrow(() -> new RuntimeException("Kategori tidak ditemukan"));
 
-        SetoranSampah setoran = new SetoranSampah();
+        Setoran setoran = new Setoran();
+        setoran.setJenisSetoran(JenisSetoran.SAMPAH);
         setoran.setWarga(warga);
         setoran.setKategori(kategori);
         setoran.setBeratKg(beratKg);
@@ -92,11 +90,11 @@ public class SetoranService {
             setoran.setBuktiPembayaran(buktiPembayaran);
         }
 
-        return setoranSampahRepository.save(setoran);
+        return setoranRepository.save(setoran);
     }
 
-    public SetoranSampah verifikasiSetoran(Long setoranId, Long petugasId, StatusSetoran status, String catatan) {
-        SetoranSampah setoran = setoranSampahRepository.findById(setoranId)
+    public Setoran verifikasiSetoran(Long setoranId, Long petugasId, StatusSetoran status, String catatan) {
+        Setoran setoran = setoranRepository.findById(setoranId)
                 .orElseThrow(() -> new RuntimeException("Setoran tidak ditemukan"));
         User petugas = userRepository.findById(petugasId)
                 .orElseThrow(() -> new RuntimeException("Petugas tidak ditemukan"));
@@ -107,11 +105,11 @@ public class SetoranService {
             setoran.setCatatan(catatan.trim());
         }
 
-        return setoranSampahRepository.save(setoran);
+        return setoranRepository.save(setoran);
     }
 
-    public SetoranSampah verifikasiPembayaran(Long setoranId, Long petugasId, StatusPembayaran statusPembayaran, String catatan) {
-        SetoranSampah setoran = setoranSampahRepository.findById(setoranId)
+    public Setoran verifikasiPembayaran(Long setoranId, Long petugasId, StatusPembayaran statusPembayaran, String catatan) {
+        Setoran setoran = setoranRepository.findById(setoranId)
                 .orElseThrow(() -> new RuntimeException("Setoran tidak ditemukan"));
         User petugas = userRepository.findById(petugasId)
                 .orElseThrow(() -> new RuntimeException("Petugas tidak ditemukan"));
@@ -130,11 +128,11 @@ public class SetoranService {
             setoran.setCatatan(catatan.trim());
         }
 
-        return setoranSampahRepository.save(setoran);
+        return setoranRepository.save(setoran);
     }
 
-    public SetoranSampah updateStatusPenjemputan(Long setoranId, StatusPenjemputan statusPenjemputan) {
-        SetoranSampah setoran = setoranSampahRepository.findById(setoranId)
+    public Setoran updateStatusPenjemputan(Long setoranId, StatusPenjemputan statusPenjemputan) {
+        Setoran setoran = setoranRepository.findById(setoranId)
                 .orElseThrow(() -> new RuntimeException("Setoran tidak ditemukan"));
 
         setoran.setStatusPenjemputan(statusPenjemputan);
@@ -143,37 +141,38 @@ public class SetoranService {
             setoran.setStatus(StatusSetoran.DITERIMA);
         }
 
-        return setoranSampahRepository.save(setoran);
+        return setoranRepository.save(setoran);
     }
 
-    public List<SetoranSampah> getAllSetoranSampah() {
-        return setoranSampahRepository.findAllByOrderByCreatedAtDesc();
+    public List<Setoran> getAllSetoranSampah() {
+        return setoranRepository.findByJenisSetoranOrderByCreatedAtDesc(JenisSetoran.SAMPAH);
     }
 
-    public List<SetoranSampah> getSetoranByWarga(Long wargaId) {
-        return setoranSampahRepository.findByWargaIdOrderByCreatedAtDesc(wargaId);
+    public List<Setoran> getSetoranByWarga(Long wargaId) {
+        return setoranRepository.findByWargaIdOrderByCreatedAtDesc(wargaId);
     }
 
-    public List<SetoranSampah> getSetoranByStatus(StatusSetoran status) {
-        return setoranSampahRepository.findByStatusOrderByCreatedAtDesc(status);
+    public List<Setoran> getSetoranByStatus(StatusSetoran status) {
+        return setoranRepository.findByStatusOrderByCreatedAtDesc(status);
     }
 
-    public List<SetoranSampah> getSetoranByPetugas(Long petugasId) {
-        return setoranSampahRepository.findByPetugasIdOrderByCreatedAtDesc(petugasId);
+    public List<Setoran> getSetoranByPetugas(Long petugasId) {
+        return setoranRepository.findByPetugasIdOrderByCreatedAtDesc(petugasId);
     }
 
-    public List<SetoranSampah> getSetoranByStatusPembayaran(StatusPembayaran statusPembayaran) {
-        return setoranSampahRepository.findByStatusPembayaranOrderByCreatedAtDesc(statusPembayaran);
+    public List<Setoran> getSetoranByStatusPembayaran(StatusPembayaran statusPembayaran) {
+        return setoranRepository.findByStatusPembayaranOrderByCreatedAtDesc(statusPembayaran);
     }
 
-    public SetoranUang createSetoranUang(Long wargaId, BigDecimal jumlah, String jenis, String deskripsi, Long petugasId) {
+    public Setoran createSetoranUang(Long wargaId, BigDecimal jumlah, String jenis, String deskripsi, Long petugasId) {
         User warga = userRepository.findById(wargaId)
                 .orElseThrow(() -> new RuntimeException("Warga tidak ditemukan"));
 
-        SetoranUang setoran = new SetoranUang();
+        Setoran setoran = new Setoran();
+        setoran.setJenisSetoran(JenisSetoran.UANG);
         setoran.setWarga(warga);
-        setoran.setJumlah(jumlah);
-        setoran.setJenis(jenis);
+        setoran.setJumlahUang(jumlah);
+        setoran.setJenisUang(jenis);
         if (deskripsi != null && !deskripsi.trim().isEmpty()) {
             setoran.setDeskripsi(deskripsi.trim());
         }
@@ -184,15 +183,15 @@ public class SetoranService {
             setoran.setPetugas(petugas);
         }
 
-        return setoranUangRepository.save(setoran);
+        return setoranRepository.save(setoran);
     }
 
-    public List<SetoranUang> getAllSetoranUang() {
-        return setoranUangRepository.findAllByOrderByCreatedAtDesc();
+    public List<Setoran> getAllSetoranUang() {
+        return setoranRepository.findByJenisSetoranOrderByCreatedAtDesc(JenisSetoran.UANG);
     }
 
-    public List<SetoranUang> getSetoranUangByWarga(Long wargaId) {
-        return setoranUangRepository.findByWargaIdOrderByCreatedAtDesc(wargaId);
+    public List<Setoran> getSetoranUangByWarga(Long wargaId) {
+        return setoranRepository.findByJenisSetoranAndWargaIdOrderByCreatedAtDesc(JenisSetoran.UANG, wargaId);
     }
 
     public Map<String, Long> getDashboardStats() {
@@ -203,18 +202,18 @@ public class SetoranService {
 
         LocalDateTime todayStart = LocalDate.now().atStartOfDay();
         LocalDateTime todayEnd = LocalDate.now().atTime(LocalTime.MAX);
-        long totalSetoranHariIni = setoranSampahRepository.countByCreatedAtBetween(todayStart, todayEnd);
+        long totalSetoranHariIni = setoranRepository.countByCreatedAtBetween(todayStart, todayEnd);
 
-        long totalMenunggu = setoranSampahRepository.countByStatus(StatusSetoran.MENUNGGU);
-        long totalDiterima = setoranSampahRepository.countByStatus(StatusSetoran.DITERIMA);
-        long totalDitolak = setoranSampahRepository.countByStatus(StatusSetoran.DITOLAK);
+        long totalMenunggu = setoranRepository.countByStatus(StatusSetoran.MENUNGGU);
+        long totalDiterima = setoranRepository.countByStatus(StatusSetoran.DITERIMA);
+        long totalDitolak = setoranRepository.countByStatus(StatusSetoran.DITOLAK);
 
-        long totalPembayaranMenunggu = setoranSampahRepository.countByStatusPembayaran(StatusPembayaran.MENUNGGU_VERIFIKASI);
+        long totalPembayaranMenunggu = setoranRepository.countByStatusPembayaran(StatusPembayaran.MENUNGGU_VERIFIKASI);
 
-        Double totalBerat = setoranSampahRepository.sumAllBeratDiterima();
+        Double totalBerat = setoranRepository.sumAllBeratDiterima();
         if (totalBerat == null) totalBerat = 0.0;
 
-        Double totalSetoranUang = setoranUangRepository.sumJumlahByJenis("SETORAN");
+        Double totalSetoranUang = setoranRepository.sumJumlahUangByJenis("SETORAN");
         if (totalSetoranUang == null) totalSetoranUang = 0.0;
 
         stats.put("totalWarga", totalWarga);
@@ -231,10 +230,10 @@ public class SetoranService {
     }
 
     public List<Object[]> getBeratPerKategori() {
-        return setoranSampahRepository.sumBeratPerKategori();
+        return setoranRepository.sumBeratPerKategori();
     }
 
     public List<Object[]> getJumlahSetoranPerBulan(int year) {
-        return setoranSampahRepository.countSetoranPerBulan(year);
+        return setoranRepository.countSetoranPerBulan(year);
     }
 }

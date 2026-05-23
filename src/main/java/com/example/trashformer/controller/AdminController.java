@@ -19,7 +19,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.trashformer.model.KategoriSampah;
 import com.example.trashformer.model.Role;
-import com.example.trashformer.model.SetoranSampah;
+import com.example.trashformer.model.Setoran;
 import com.example.trashformer.model.User;
 import com.example.trashformer.repository.KategoriSampahRepository;
 import com.example.trashformer.service.SetoranService;
@@ -61,8 +61,8 @@ public class AdminController {
         model.addAttribute("setoranHariIni", stats.getOrDefault("totalSetoranHariIni", 0L));
         model.addAttribute("totalSampah", stats.getOrDefault("totalBerat", 0L));
 
-        List<SetoranSampah> allSetoran = setoranService.getAllSetoranSampah();
-        List<SetoranSampah> recent = allSetoran.size() > 5 ? allSetoran.subList(0, 5) : allSetoran;
+        List<Setoran> allSetoran = setoranService.getAllSetoranSampah();
+        List<Setoran> recent = allSetoran.size() > 5 ? allSetoran.subList(0, 5) : allSetoran;
         model.addAttribute("recentSetoran", recent);
 
         List<Object[]> kategoriData = setoranService.getBeratPerKategori();

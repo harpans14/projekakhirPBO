@@ -89,13 +89,13 @@
                         <tbody>
                             <tr th:each="s, stat : ${recentSetoran}">
                                 <td th:text="${stat.count}">1</td>
-                                <td th:text="${s.kategori.nama}">ORGANIK</td>
+                                <td th:text="${s.kategori != null ? s.kategori.nama : '-'}">ORGANIK</td>
                                 <td th:text="${s.beratKg}">5.0</td>
                                 <td th:text="${s.totalHarga}">Rp 10.000</td>
                                 <td>
                                     <span class="badge"
-                                          th:classappend="${s.status.name() == 'DITERIMA'} ? 'bg-success' : (${s.status.name() == 'MENUNGGU'} ? 'bg-warning' : 'bg-danger')"
-                                          th:text="${s.status.name()}">DITERIMA</span>
+                                          th:classappend="${s.status?.name() == 'DITERIMA'} ? 'bg-success' : (${s.status?.name() == 'MENUNGGU'} ? 'bg-warning' : 'bg-danger')"
+                                          th:text="${s.status?.name()}">DITERIMA</span>
                                 </td>
                                 <td th:text="${#temporals.format(s.createdAt, 'dd-MM-yyyy')}">2024-01-01</td>
                             </tr>
