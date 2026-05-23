@@ -1,5 +1,8 @@
 package com.example.trashformer.controller;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -14,9 +17,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.example.trashformer.model.KategoriSampah;
 import com.example.trashformer.model.Role;
 import com.example.trashformer.model.SetoranSampah;
 import com.example.trashformer.model.User;
+import com.example.trashformer.repository.KategoriSampahRepository;
 import com.example.trashformer.service.SetoranService;
 import com.example.trashformer.service.UserService;
 
@@ -26,11 +31,14 @@ public class AdminController {
 
     private final UserService userService;
     private final SetoranService setoranService;
+    private final KategoriSampahRepository kategoriSampahRepository;
 
     public AdminController(UserService userService,
-                           SetoranService setoranService) {
+                           SetoranService setoranService,
+                           KategoriSampahRepository kategoriSampahRepository) {
         this.userService = userService;
         this.setoranService = setoranService;
+        this.kategoriSampahRepository = kategoriSampahRepository;
     }
 
     private void addUserToModel(Authentication authentication, Model model) {
@@ -56,6 +64,29 @@ public class AdminController {
         List<SetoranSampah> allSetoran = setoranService.getAllSetoranSampah();
         List<SetoranSampah> recent = allSetoran.size() > 5 ? allSetoran.subList(0, 5) : allSetoran;
         model.addAttribute("recentSetoran", recent);
+
+        List<Object[]> kategoriData = setoranService.getBeratPerKategori();
+        List<String> kategoriLabels = new ArrayList<>();
+        List<Double> kategoriValues = new ArrayList<>();
+        for (Object[] row : kategoriData) {
+            kategoriLabels.add((String) row[0]);
+            kategoriValues.add(((Number) row[1]).doubleValue());
+        }
+        model.addAttribute("kategoriLabels", kategoriLabels);
+        model.addAttribute("kategoriValues", kategoriValues);
+
+        int currentYear = LocalDate.now().getYear();
+        List<Object[]> bulanData = setoranService.getJumlahSetoranPerBulan(currentYear);
+        long[] bulanValues = new long[12];
+        for (Object[] row : bulanData) {
+            int month = ((Number) row[0]).intValue();
+            long count = ((Number) row[1]).longValue();
+            if (month >= 1 && month <= 12) {
+                bulanValues[month - 1] = count;
+            }
+        }
+        model.addAttribute("bulanData", bulanValues);
+
         return "admin/dashboard";
     }
 
@@ -191,5 +222,39 @@ public class AdminController {
         addUserToModel(authentication, model);
         model.addAttribute("setoranUangList", setoranService.getAllSetoranUang());
         return "admin/setoran-uang";
+    }
+
+    @GetMapping("/kategori")
+    public String listKategori(Authentication authentication, Model model) {
+        addUserToModel(authentication, model);
+        List<KategoriSampah> kategoriList = kategoriSampahRepository.findAll();
+        model.addAttribute("listKategori", kategoriList);
+        return "admin/kategori";
+    }
+
+    @PostMapping("/kategori/simpan")
+    public String simpanKategori(@RequestParam String namaKategori,
+                                  @RequestParam(required = false) BigDecimal hargaPerKg,
+                                  RedirectAttributes redirectAttrs) {
+        String namaTrim = namaKategori.trim();
+        if (namaTrim.isEmpty()) {
+            redirectAttrs.addFlashAttribute("error", "Nama kategori harus diisi");
+            return "redirect:/admin/kategori";
+        }
+
+        try {
+            KategoriSampah kategori = new KategoriSampah();
+            kategori.setNama(namaTrim);
+            if (hargaPerKg != null) {
+                kategori.setHargaPerKg(hargaPerKg);
+            }
+            kategoriSampahRepository.save(kategori);
+            redirectAttrs.addFlashAttribute("success", "Kategori berhasil ditambahkan");
+        } catch (DataIntegrityViolationException e) {
+            redirectAttrs.addFlashAttribute("error", "Kategori dengan nama tersebut sudah ada");
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "Gagal menambahkan kategori");
+        }
+        return "redirect:/admin/kategori?suksesTambah";
     }
 }

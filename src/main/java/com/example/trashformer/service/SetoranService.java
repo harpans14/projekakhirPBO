@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import com.example.trashformer.model.KategoriSampah;
 import com.example.trashformer.model.SetoranSampah;
 import com.example.trashformer.model.SetoranUang;
+import com.example.trashformer.model.StatusPembayaran;
+import com.example.trashformer.model.StatusPenjemputan;
 import com.example.trashformer.model.StatusSetoran;
 import com.example.trashformer.model.User;
 import com.example.trashformer.repository.KategoriSampahRepository;
@@ -61,6 +63,38 @@ public class SetoranService {
         return setoranSampahRepository.save(setoran);
     }
 
+    public SetoranSampah createSetoranSampahWarga(Long wargaId, Long kategoriId, BigDecimal beratKg,
+                                                   String alamatJemput, String catatan, String buktiPembayaran) {
+        User warga = userRepository.findById(wargaId)
+                .orElseThrow(() -> new RuntimeException("Warga tidak ditemukan"));
+        KategoriSampah kategori = kategoriSampahRepository.findById(kategoriId)
+                .orElseThrow(() -> new RuntimeException("Kategori tidak ditemukan"));
+
+        SetoranSampah setoran = new SetoranSampah();
+        setoran.setWarga(warga);
+        setoran.setKategori(kategori);
+        setoran.setBeratKg(beratKg);
+
+        BigDecimal hargaPerKg = kategori.getHargaPerKg();
+        if (hargaPerKg != null) {
+            setoran.setTotalHarga(beratKg.multiply(hargaPerKg));
+        }
+
+        if (alamatJemput != null && !alamatJemput.trim().isEmpty()) {
+            setoran.setAlamatJemput(alamatJemput.trim());
+        }
+
+        if (catatan != null && !catatan.trim().isEmpty()) {
+            setoran.setCatatan(catatan.trim());
+        }
+
+        if (buktiPembayaran != null && !buktiPembayaran.isEmpty()) {
+            setoran.setBuktiPembayaran(buktiPembayaran);
+        }
+
+        return setoranSampahRepository.save(setoran);
+    }
+
     public SetoranSampah verifikasiSetoran(Long setoranId, Long petugasId, StatusSetoran status, String catatan) {
         SetoranSampah setoran = setoranSampahRepository.findById(setoranId)
                 .orElseThrow(() -> new RuntimeException("Setoran tidak ditemukan"));
@@ -71,6 +105,42 @@ public class SetoranService {
         setoran.setPetugas(petugas);
         if (catatan != null && !catatan.trim().isEmpty()) {
             setoran.setCatatan(catatan.trim());
+        }
+
+        return setoranSampahRepository.save(setoran);
+    }
+
+    public SetoranSampah verifikasiPembayaran(Long setoranId, Long petugasId, StatusPembayaran statusPembayaran, String catatan) {
+        SetoranSampah setoran = setoranSampahRepository.findById(setoranId)
+                .orElseThrow(() -> new RuntimeException("Setoran tidak ditemukan"));
+        User petugas = userRepository.findById(petugasId)
+                .orElseThrow(() -> new RuntimeException("Petugas tidak ditemukan"));
+
+        setoran.setStatusPembayaran(statusPembayaran);
+        setoran.setPetugas(petugas);
+
+        if (statusPembayaran == StatusPembayaran.DISETUJUI) {
+            setoran.setStatus(StatusSetoran.DITERIMA);
+            setoran.setStatusPenjemputan(StatusPenjemputan.SEDANG_DIJEMPUT);
+        } else if (statusPembayaran == StatusPembayaran.DITOLAK) {
+            setoran.setStatus(StatusSetoran.DITOLAK);
+        }
+
+        if (catatan != null && !catatan.trim().isEmpty()) {
+            setoran.setCatatan(catatan.trim());
+        }
+
+        return setoranSampahRepository.save(setoran);
+    }
+
+    public SetoranSampah updateStatusPenjemputan(Long setoranId, StatusPenjemputan statusPenjemputan) {
+        SetoranSampah setoran = setoranSampahRepository.findById(setoranId)
+                .orElseThrow(() -> new RuntimeException("Setoran tidak ditemukan"));
+
+        setoran.setStatusPenjemputan(statusPenjemputan);
+
+        if (statusPenjemputan == StatusPenjemputan.SELESAI) {
+            setoran.setStatus(StatusSetoran.DITERIMA);
         }
 
         return setoranSampahRepository.save(setoran);
@@ -90,6 +160,10 @@ public class SetoranService {
 
     public List<SetoranSampah> getSetoranByPetugas(Long petugasId) {
         return setoranSampahRepository.findByPetugasIdOrderByCreatedAtDesc(petugasId);
+    }
+
+    public List<SetoranSampah> getSetoranByStatusPembayaran(StatusPembayaran statusPembayaran) {
+        return setoranSampahRepository.findByStatusPembayaranOrderByCreatedAtDesc(statusPembayaran);
     }
 
     public SetoranUang createSetoranUang(Long wargaId, BigDecimal jumlah, String jenis, String deskripsi, Long petugasId) {
@@ -135,6 +209,8 @@ public class SetoranService {
         long totalDiterima = setoranSampahRepository.countByStatus(StatusSetoran.DITERIMA);
         long totalDitolak = setoranSampahRepository.countByStatus(StatusSetoran.DITOLAK);
 
+        long totalPembayaranMenunggu = setoranSampahRepository.countByStatusPembayaran(StatusPembayaran.MENUNGGU_VERIFIKASI);
+
         Double totalBerat = setoranSampahRepository.sumAllBeratDiterima();
         if (totalBerat == null) totalBerat = 0.0;
 
@@ -147,9 +223,18 @@ public class SetoranService {
         stats.put("totalMenunggu", totalMenunggu);
         stats.put("totalDiterima", totalDiterima);
         stats.put("totalDitolak", totalDitolak);
+        stats.put("totalPembayaranMenunggu", totalPembayaranMenunggu);
         stats.put("totalBerat", totalBerat.longValue());
         stats.put("totalSetoranUang", totalSetoranUang.longValue());
 
         return stats;
+    }
+
+    public List<Object[]> getBeratPerKategori() {
+        return setoranSampahRepository.sumBeratPerKategori();
+    }
+
+    public List<Object[]> getJumlahSetoranPerBulan(int year) {
+        return setoranSampahRepository.countSetoranPerBulan(year);
     }
 }

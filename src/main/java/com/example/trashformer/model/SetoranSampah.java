@@ -43,6 +43,20 @@ public class SetoranSampah {
     @Column(nullable = false)
     private StatusSetoran status = StatusSetoran.MENUNGGU;
 
+    @Column(name = "alamat_jemput")
+    private String alamatJemput;
+
+    @Column(name = "bukti_pembayaran")
+    private String buktiPembayaran;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status_pembayaran", nullable = false)
+    private StatusPembayaran statusPembayaran = StatusPembayaran.MENUNGGU_VERIFIKASI;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status_penjemputan", nullable = false)
+    private StatusPenjemputan statusPenjemputan = StatusPenjemputan.DIJADWALKAN;
+
     private String catatan;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -63,6 +77,12 @@ public class SetoranSampah {
         this.updatedAt = LocalDateTime.now();
         if (this.status == null) {
             this.status = StatusSetoran.MENUNGGU;
+        }
+        if (this.statusPembayaran == null) {
+            this.statusPembayaran = StatusPembayaran.MENUNGGU_VERIFIKASI;
+        }
+        if (this.statusPenjemputan == null) {
+            this.statusPenjemputan = StatusPenjemputan.DIJADWALKAN;
         }
     }
 
@@ -117,6 +137,38 @@ public class SetoranSampah {
 
     public void setStatus(StatusSetoran status) {
         this.status = status;
+    }
+
+    public String getAlamatJemput() {
+        return alamatJemput;
+    }
+
+    public void setAlamatJemput(String alamatJemput) {
+        this.alamatJemput = alamatJemput;
+    }
+
+    public String getBuktiPembayaran() {
+        return buktiPembayaran;
+    }
+
+    public void setBuktiPembayaran(String buktiPembayaran) {
+        this.buktiPembayaran = buktiPembayaran;
+    }
+
+    public StatusPembayaran getStatusPembayaran() {
+        return statusPembayaran;
+    }
+
+    public void setStatusPembayaran(StatusPembayaran statusPembayaran) {
+        this.statusPembayaran = statusPembayaran;
+    }
+
+    public StatusPenjemputan getStatusPenjemputan() {
+        return statusPenjemputan;
+    }
+
+    public void setStatusPenjemputan(StatusPenjemputan statusPenjemputan) {
+        this.statusPenjemputan = statusPenjemputan;
     }
 
     public String getCatatan() {
