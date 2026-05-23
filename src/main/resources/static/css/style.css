@@ -394,6 +394,11 @@ a.btn-logout {
     color: #0c5460;
 }
 
+.bg-soft-primary {
+    background: #cce5ff;
+    color: #004085;
+}
+
 .bg-soft-secondary {
     background: #e2e3e5;
     color: #383d41;

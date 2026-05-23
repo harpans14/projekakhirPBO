@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="layout">
+<head>
+    <title>Buat Laporan Sampah</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <h4 class="page-title">Buat Laporan Sampah</h4>
+
+        <div class="alert alert-info fade-in mb-4">
+            <i class="fas fa-info-circle me-2"></i>
+            Silakan isi form di bawah untuk melaporkan setoran sampah Anda. <strong>Setoran wajib disertai bukti pembayaran biaya penjemputan/kebersihan</strong> melalui transfer. Laporan akan diverifikasi oleh petugas.
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-edit me-2"></i>Form Laporan Setoran
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/warga/laporan/simpan}" method="post" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="kategoriId" class="form-label">Jenis Sampah <span class="text-danger">*</span></label>
+                                <select class="form-select" id="kategoriId" name="kategoriId" required onchange="hitungTotal()">
+                                    <option value="">-- Pilih Jenis Sampah --</option>
+                                    <option th:each="k : ${listKategori}"
+                                            th:value="${k.id}"
+                                            th:attr="data-harga=${k.hargaPerKg}"
+                                            th:text="${k.nama} + ' - Rp ' + ${k.hargaPerKg} + '/kg'">
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="beratKg" class="form-label">Estimasi Berat (Kg) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="beratKg" name="beratKg"
+                                       step="0.1" min="0.1" required
+                                       placeholder="Contoh: 2.5"
+                                       oninput="hitungTotal()">
+                                <div class="form-text">Masukkan perkiraan berat sampah dalam kilogram.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="alamatJemput" class="form-label">Alamat Penjemputan <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="alamatJemput" name="alamatJemput"
+                                          rows="3" required th:text="${alamat}">Alamat warga</textarea>
+                                <div class="form-text">Alamat akan diisi otomatis dari profil Anda. Bisa diubah jika perlu.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="buktiPembayaran" class="form-label">Bukti Pembayaran (Transfer) <span class="text-danger">*</span></label>
+                                <input type="file" class="form-control" id="buktiPembayaran" name="buktiPembayaran"
+                                       accept=".jpg,.jpeg,.png,.gif,.bmp" required>
+                                <div class="form-text">Upload foto bukti transfer biaya penjemputan/kebersihan. Format: JPG, PNG, GIF, BMP. Maks: 5MB.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="catatanTambahan" class="form-label">Catatan Tambahan</label>
+                                <textarea class="form-control" id="catatanTambahan" name="catatanTambahan"
+                                          rows="2" placeholder="Misal: sampah ada di depan pagar, tolong dijemput jam 10 pagi"></textarea>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-paper-plane me-1"></i>Kirim Laporan
+                                </button>
+                                <a th:href="@{/warga/dashboard}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-1"></i>Batal
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card mb-3">
+                    <div class="card-header bg-soft-success">
+                        <i class="fas fa-calculator me-2"></i>Estimasi Harga
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2 d-flex justify-content-between">
+                            <span class="text-muted">Jenis Sampah:</span>
+                            <strong id="estimasiJenis" class="text-end">-</strong>
+                        </div>
+                        <div class="mb-2 d-flex justify-content-between">
+                            <span class="text-muted">Harga per Kg:</span>
+                            <strong id="estimasiHargaPerKg" class="text-end">Rp 0</strong>
+                        </div>
+                        <div class="mb-2 d-flex justify-content-between">
+                            <span class="text-muted">Berat:</span>
+                            <strong id="estimasiBerat" class="text-end">0 Kg</strong>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <span class="fw-bold" style="font-size:1.1rem;">Total Estimasi:</span>
+                            <span id="estimasiTotal" class="fw-bold text-success" style="font-size:1.3rem;">Rp 0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-info-circle me-2"></i>Informasi
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Setelah dikirim, laporan akan masuk ke petugas untuk diverifikasi.
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-credit-card text-info me-2"></i>
+                                Wajib mengupload bukti transfer biaya penjemputan/kebersihan.
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-clock text-warning me-2"></i>
+                                Status awal laporan adalah <strong>MENUNGGU_VERIFIKASI</strong>.
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Jika pembayaran disetujui, petugas akan menjemput sampah ke lokasi Anda.
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-times-circle text-danger me-2"></i>
+                                Jika ditolak, Anda akan mendapat catatan penolakan.
+                            </li>
+                            <li>
+                                <i class="fas fa-history text-info me-2"></i>
+                                Status laporan bisa dicek di menu 
+                                <a th:href="@{/warga/riwayat}">Riwayat</a>.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var hargaMap = {};
+        var namaMap = {};
+        document.querySelectorAll('#kategoriId option').forEach(function(opt) {
+            if (opt.value) {
+                var harga = parseFloat(opt.getAttribute('data-harga')) || 0;
+                hargaMap[opt.value] = harga;
+                namaMap[opt.value] = opt.text.split(' - ')[0];
+            }
+        });
+
+        function hitungTotal() {
+            var katId = document.getElementById('kategoriId').value;
+            var berat = parseFloat(document.getElementById('beratKg').value) || 0;
+            var harga = hargaMap[katId] || 0;
+            var nama = namaMap[katId] || '-';
+            var total = harga * berat;
+
+            document.getElementById('estimasiJenis').textContent = nama;
+            document.getElementById('estimasiHargaPerKg').textContent = 'Rp ' + harga.toLocaleString('id-ID');
+            document.getElementById('estimasiBerat').textContent = berat + ' Kg';
+            document.getElementById('estimasiTotal').textContent = 'Rp ' + total.toLocaleString('id-ID');
+        }
+    </script>
+</body>
+</html>

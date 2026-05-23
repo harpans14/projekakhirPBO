@@ -16,6 +16,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.example.trashformer.model.KategoriSampah;
 import com.example.trashformer.model.Role;
 import com.example.trashformer.model.SetoranSampah;
+import com.example.trashformer.model.StatusPembayaran;
+import com.example.trashformer.model.StatusPenjemputan;
 import com.example.trashformer.model.StatusSetoran;
 import com.example.trashformer.model.User;
 import com.example.trashformer.repository.KategoriSampahRepository;
@@ -70,9 +72,12 @@ public class PetugasController {
                     .mapToDouble(s -> s.getBeratKg() != null ? s.getBeratKg().doubleValue() : 0.0)
                     .sum();
 
+            long pembayaranMenunggu = setoranSampahRepository.countByStatusPembayaran(StatusPembayaran.MENUNGGU_VERIFIKASI);
+
             model.addAttribute("setoranHariIni", totalMenunggu + totalVerified);
             model.addAttribute("wargaDibantu", totalVerified);
             model.addAttribute("totalSampah", (long) totalBerat);
+            model.addAttribute("pembayaranMenunggu", pembayaranMenunggu);
 
             List<SetoranSampah> allSetoran = setoranService.getAllSetoranSampah();
             List<SetoranSampah> recent = allSetoran.size() > 5 ? allSetoran.subList(0, 5) : allSetoran;
@@ -136,8 +141,56 @@ public class PetugasController {
     @GetMapping("/verifikasi")
     public String verifikasiSetoran(Authentication authentication, Model model) {
         addUserToModel(authentication, model);
-        model.addAttribute("setoranList", setoranService.getSetoranByStatus(StatusSetoran.MENUNGGU));
+        model.addAttribute("setoranList", setoranService.getSetoranByStatusPembayaran(StatusPembayaran.MENUNGGU_VERIFIKASI));
+        model.addAttribute("penjemputanList", setoranService.getSetoranByStatus(StatusSetoran.DITERIMA));
         return "petugas/verifikasi";
+    }
+
+    @PostMapping("/verifikasi/pembayaran/{id}")
+    public String prosesVerifikasiPembayaran(@PathVariable Long id,
+                                              @RequestParam StatusPembayaran statusPembayaran,
+                                              @RequestParam(required = false) String catatan,
+                                              Authentication authentication,
+                                              RedirectAttributes redirectAttrs) {
+        try {
+            User petugas = getCurrentUser(authentication);
+            if (petugas == null) {
+                redirectAttrs.addFlashAttribute("error", "Petugas tidak ditemukan");
+                return "redirect:/petugas/verifikasi";
+            }
+            setoranService.verifikasiPembayaran(id, petugas.getId(), statusPembayaran, catatan);
+            String msg = statusPembayaran == StatusPembayaran.DISETUJUI
+                    ? "Pembayaran disetujui, penjemputan dijadwalkan"
+                    : "Pembayaran ditolak";
+            redirectAttrs.addFlashAttribute("success", msg);
+            return "redirect:/petugas/verifikasi";
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "Gagal memverifikasi pembayaran: " + e.getMessage());
+            return "redirect:/petugas/verifikasi";
+        }
+    }
+
+    @PostMapping("/verifikasi/penjemputan/{id}")
+    public String prosesUpdatePenjemputan(@PathVariable Long id,
+                                           @RequestParam StatusPenjemputan statusPenjemputan,
+                                           Authentication authentication,
+                                           RedirectAttributes redirectAttrs) {
+        try {
+            User petugas = getCurrentUser(authentication);
+            if (petugas == null) {
+                redirectAttrs.addFlashAttribute("error", "Petugas tidak ditemukan");
+                return "redirect:/petugas/verifikasi";
+            }
+            setoranService.updateStatusPenjemputan(id, statusPenjemputan);
+            String msg = statusPenjemputan == StatusPenjemputan.SEDANG_DIJEMPUT
+                    ? "Status penjemputan diubah menjadi Sedang Dijemput"
+                    : "Status penjemputan diubah menjadi Selesai";
+            redirectAttrs.addFlashAttribute("success", msg);
+            return "redirect:/petugas/verifikasi";
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "Gagal mengupdate status penjemputan: " + e.getMessage());
+            return "redirect:/petugas/verifikasi";
+        }
     }
 
     @PostMapping("/verifikasi/{id}")

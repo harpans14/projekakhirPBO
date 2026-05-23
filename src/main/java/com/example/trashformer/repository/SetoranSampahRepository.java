@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.example.trashformer.model.SetoranSampah;
+import com.example.trashformer.model.StatusPembayaran;
+import com.example.trashformer.model.StatusPenjemputan;
 import com.example.trashformer.model.StatusSetoran;
 
 public interface SetoranSampahRepository extends JpaRepository<SetoranSampah, Long> {
@@ -20,7 +22,13 @@ public interface SetoranSampahRepository extends JpaRepository<SetoranSampah, Lo
 
     List<SetoranSampah> findByPetugasIdOrderByCreatedAtDesc(Long petugasId);
 
+    List<SetoranSampah> findByStatusPembayaranOrderByCreatedAtDesc(StatusPembayaran statusPembayaran);
+
     long countByStatus(StatusSetoran status);
+
+    long countByStatusPembayaran(StatusPembayaran statusPembayaran);
+
+    long countByStatusPenjemputan(StatusPenjemputan statusPenjemputan);
 
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
@@ -35,4 +43,10 @@ public interface SetoranSampahRepository extends JpaRepository<SetoranSampah, Lo
 
     @Query("SELECT COUNT(s) FROM SetoranSampah s WHERE s.createdAt BETWEEN :start AND :end")
     long countByDateRange(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT k.nama, COALESCE(SUM(s.beratKg), 0) FROM SetoranSampah s JOIN s.kategori k WHERE s.status = 'DITERIMA' GROUP BY k.nama")
+    List<Object[]> sumBeratPerKategori();
+
+    @Query("SELECT MONTH(s.createdAt), COUNT(s) FROM SetoranSampah s WHERE YEAR(s.createdAt) = :year GROUP BY MONTH(s.createdAt) ORDER BY MONTH(s.createdAt)")
+    List<Object[]> countSetoranPerBulan(@Param("year") int year);
 }

@@ -57,7 +57,14 @@
             </div>
             <div class="col-md-4">
                 <div class="card">
-                    <div class="card-header">Sampah per Kategori</div>
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Sampah per Kategori</span>
+                            <a th:href="@{/admin/kategori}" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-cog me-1"></i>Kelola Kategori
+                            </a>
+                        </div>
+                    </div>
                     <div class="card-body">
                         <canvas id="chartKategori" height="200"></canvas>
                     </div>
@@ -106,7 +113,7 @@
     <script th:inline="javascript">
         /*<![CDATA[*/
         const labelsSetoran = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-        const dataSetoran = [12, 19, 15, 22, 18, 25, 30, 28, 24, 20, 16, 23];
+        const dataSetoran = /*[[${bulanData}]]*/ [0,0,0,0,0,0,0,0,0,0,0,0];
         var ctxBulanan = document.getElementById('chartSetoranBulanan');
         if (ctxBulanan) {
             new Chart(ctxBulanan, {
@@ -126,19 +133,23 @@
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, ticks: { stepSize: 5 } } }
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } } }
                 }
             });
         }
+
+        const kategoriLabels = /*[[${kategoriLabels}]]*/ [];
+        const kategoriValues = /*[[${kategoriValues}]]*/ [];
+        const warnaPalette = ['#2ecc71', '#3498db', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e', '#16a085', '#c0392b'];
         var ctxKategori = document.getElementById('chartKategori');
         if (ctxKategori) {
             new Chart(ctxKategori, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Organik', 'Anorganik', 'B3'],
+                    labels: kategoriLabels,
                     datasets: [{
-                        data: [55, 30, 15],
-                        backgroundColor: ['#2ecc71', '#3498db', '#e74c3c'],
+                        data: kategoriValues,
+                        backgroundColor: warnaPalette.slice(0, kategoriLabels.length),
                         borderWidth: 0
                     }]
                 },
