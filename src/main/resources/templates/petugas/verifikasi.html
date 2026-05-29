@@ -60,15 +60,15 @@
                                 <td th:text="${#temporals.format(s.createdAt, 'dd-MM-yyyy')}">2024-01-01</td>
                                 <td>
                                     <form th:action="@{/petugas/verifikasi/daur-ulang/{id}(id=${s.id})}" method="post" style="display:inline;">
-                                        <button type="submit" class="btn btn-sm btn-success mb-1 w-100"
-                                                onclick="return confirm('Terima setoran daur ulang ini? Saldo warga akan dikredit.')">
+                                        <button type="submit" class="btn btn-sm btn-success mb-1 w-100 btn-confirm-action"
+                                                data-confirm="Terima setoran daur ulang ini? Saldo warga akan dikredit.">
                                             <i class="fas fa-check me-1"></i>Terima & Kredit
                                         </button>
                                     </form>
                                     <form th:action="@{/petugas/verifikasi/{id}(id=${s.id})}" method="post" style="display:inline;">
                                         <input type="hidden" name="status" value="DITOLAK">
-                                        <button type="submit" class="btn btn-sm btn-danger w-100"
-                                                onclick="return confirm('Tolak setoran daur ulang ini?')">
+                                        <button type="submit" class="btn btn-sm btn-danger w-100 btn-confirm-action"
+                                                data-confirm="Tolak setoran daur ulang ini?">
                                             <i class="fas fa-times me-1"></i>Tolak
                                         </button>
                                     </form>
@@ -137,15 +137,15 @@
                                 <td>
                                     <form th:action="@{/petugas/verifikasi/pembayaran/{id}(id=${s.id})}" method="post" style="display:inline;">
                                         <input type="hidden" name="statusPembayaran" value="DISETUJUI">
-                                        <button type="submit" class="btn btn-sm btn-success mb-1 w-100"
-                                                onclick="return confirm('Setujui pembayaran ini dan jadwalkan penjemputan?')">
+                                        <button type="submit" class="btn btn-sm btn-success mb-1 w-100 btn-confirm-action"
+                                                data-confirm="Setujui pembayaran ini dan jadwalkan penjemputan?">
                                             <i class="fas fa-check me-1"></i>ACC & Jemput
                                         </button>
                                     </form>
                                     <form th:action="@{/petugas/verifikasi/pembayaran/{id}(id=${s.id})}" method="post" style="display:inline;">
                                         <input type="hidden" name="statusPembayaran" value="DITOLAK">
-                                        <button type="submit" class="btn btn-sm btn-danger w-100"
-                                                onclick="return confirm('Tolak pembayaran ini?')">
+                                        <button type="submit" class="btn btn-sm btn-danger w-100 btn-confirm-action"
+                                                data-confirm="Tolak pembayaran ini?">
                                             <i class="fas fa-times me-1"></i>Tolak
                                         </button>
                                     </form>

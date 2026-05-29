@@ -44,16 +44,16 @@
                                 <td class="small" th:text="${#temporals.format(p.createdAt, 'dd-MM-yyyy HH:mm')}">01-01-2024</td>
                                 <td>
                                     <form th:action="@{/petugas/penarikan/{id}/setujui(id=${p.id})}" method="post" style="display:inline;">
-                                        <button type="submit" class="btn btn-sm btn-success mb-1 w-100"
-                                                onclick="return confirm('Setujui penarikan ini? Saldo warga akan dipotong.')">
+                                        <button type="submit" class="btn btn-sm btn-success mb-1 w-100 btn-confirm-action"
+                                                data-confirm="Setujui penarikan ini? Saldo warga akan dipotong.">
                                             <i class="fas fa-check me-1"></i>Setujui
                                         </button>
                                     </form>
                                     <form th:action="@{/petugas/penarikan/{id}/tolak(id=${p.id})}" method="post" style="display:inline;">
                                         <input type="text" name="catatan" class="form-control form-control-sm mb-1"
                                                placeholder="Alasan penolakan" style="width:130px;">
-                                        <button type="submit" class="btn btn-sm btn-danger w-100"
-                                                onclick="return confirm('Tolak penarikan ini?')">
+                                        <button type="submit" class="btn btn-sm btn-danger w-100 btn-confirm-action"
+                                                data-confirm="Tolak penarikan ini?">
                                             <i class="fas fa-times me-1"></i>Tolak
                                         </button>
                                     </form>

@@ -136,28 +136,48 @@
             }
         }
 
+        function showToast(msg, type) {
+            type = type || 'primary';
+            var toastEl = document.getElementById('toastNotif');
+            if (!toastEl) return;
+            var msgEl = document.getElementById('toastMsg');
+            if (msgEl) msgEl.textContent = msg;
+            toastEl.className = 'toast align-items-center border-0 bg-' + type + ' text-white';
+            var toast = new bootstrap.Toast(toastEl, { delay: 4000 });
+            toast.show();
+        }
+
         function validateForm() {
             var pw = document.getElementById('password').value;
             var cpw = document.getElementById('confirmPassword').value;
 
             if (pw.length < 8) {
-                alert('Password minimal 8 karakter');
+                showToast('Password minimal 8 karakter', 'danger');
                 return false;
             }
             if (!/[A-Z]/.test(pw)) {
-                alert('Password harus mengandung huruf besar');
+                showToast('Password harus mengandung huruf besar', 'danger');
                 return false;
             }
             if (!/[0-9]/.test(pw)) {
-                alert('Password harus mengandung angka');
+                showToast('Password harus mengandung angka', 'danger');
                 return false;
             }
             if (pw !== cpw) {
-                alert('Konfirmasi password tidak cocok');
+                showToast('Konfirmasi password tidak cocok', 'danger');
                 return false;
             }
             return true;
         }
     </script>
+
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;">
+        <div id="toastNotif" class="toast align-items-center border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body" id="toastMsg"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
