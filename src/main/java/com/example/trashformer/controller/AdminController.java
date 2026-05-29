@@ -242,6 +242,8 @@ public class AdminController {
     @PostMapping("/kategori/simpan")
     public String simpanKategori(@RequestParam String namaKategori,
                                   @RequestParam(required = false) BigDecimal hargaPerKg,
+                                  @RequestParam(defaultValue = "false") boolean isDaurUlang,
+                                  @RequestParam(required = false) BigDecimal hargaDaurUlang,
                                   RedirectAttributes redirectAttrs) {
         String namaTrim = namaKategori.trim();
         if (namaTrim.isEmpty()) {
@@ -254,6 +256,10 @@ public class AdminController {
             kategori.setNama(namaTrim);
             if (hargaPerKg != null) {
                 kategori.setHargaPerKg(hargaPerKg);
+            }
+            kategori.setIsDaurUlang(isDaurUlang);
+            if (isDaurUlang && hargaDaurUlang != null) {
+                kategori.setHargaDaurUlang(hargaDaurUlang);
             }
             kategoriSampahRepository.save(kategori);
             redirectAttrs.addFlashAttribute("success", "Kategori berhasil ditambahkan");
@@ -278,6 +284,8 @@ public class AdminController {
     public String updateKategori(@RequestParam Long id,
                                   @RequestParam String namaKategori,
                                   @RequestParam(required = false) BigDecimal hargaPerKg,
+                                  @RequestParam(defaultValue = "false") boolean isDaurUlang,
+                                  @RequestParam(required = false) BigDecimal hargaDaurUlang,
                                   RedirectAttributes redirectAttrs) {
         String namaTrim = namaKategori.trim();
         if (namaTrim.isEmpty()) {
@@ -290,6 +298,12 @@ public class AdminController {
                     .orElseThrow(() -> new RuntimeException("Kategori tidak ditemukan"));
             kategori.setNama(namaTrim);
             kategori.setHargaPerKg(hargaPerKg);
+            kategori.setIsDaurUlang(isDaurUlang);
+            if (isDaurUlang && hargaDaurUlang != null) {
+                kategori.setHargaDaurUlang(hargaDaurUlang);
+            } else {
+                kategori.setHargaDaurUlang(null);
+            }
             kategoriSampahRepository.save(kategori);
             redirectAttrs.addFlashAttribute("success", "Kategori berhasil diperbarui");
         } catch (DataIntegrityViolationException e) {

@@ -10,6 +10,7 @@
         <div class="alert alert-info fade-in mb-4">
             <i class="fas fa-info-circle me-2"></i>
             Silakan isi form di bawah untuk melaporkan setoran sampah Anda. Bisa memilih <strong>lebih dari satu jenis sampah</strong> dalam satu laporan.
+            <span class="d-block mt-1 small"><i class="fas fa-recycle text-success me-1"></i>Kategori dengan label <span class="badge bg-success">Daur Ulang</span> masuk ke <strong>Bank Sampah</strong> dan saldo akan dikredit ke akun Anda.</span>
         </div>
 
         <div class="row">
@@ -28,8 +29,8 @@
                                             <option value="">-- Pilih Jenis Sampah --</option>
                                             <option th:each="k : ${listKategori}"
                                                     th:value="${k.id}"
-                                                    th:attr="data-harga=${k.hargaPerKg}"
-                                                    th:text="${k.nama} + ' - Rp ' + ${k.hargaPerKg} + '/kg'">
+                                                    th:attr="data-harga=${k.hargaPerKg},data-harga-daur=${k.hargaDaurUlang},data-daur=${k.isDaurUlang}"
+                                                    th:text="${k.nama} + ' - Rp ' + (${k.isDaurUlang == true and k.hargaDaurUlang != null} ? ${k.hargaDaurUlang} : ${k.hargaPerKg}) + '/kg'">
                                             </option>
                                         </select>
                                     </div>
@@ -58,10 +59,16 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="buktiPembayaran" class="form-label">Bukti Pembayaran (Transfer) <span class="text-danger">*</span></label>
+                                <label for="buktiPembayaran" class="form-label">
+                                    Bukti Pembayaran (Transfer)
+                                    <span class="text-danger" id="buktiRequiredLabel">*</span>
+                                    <span class="badge bg-success small" id="buktiOptionalLabel" style="display:none;">
+                                        <i class="fas fa-recycle me-1"></i>Opsional (Daur Ulang)
+                                    </span>
+                                </label>
                                 <input type="file" class="form-control" id="buktiPembayaran" name="buktiPembayaran"
-                                       accept=".jpg,.jpeg,.png,.gif,.bmp" required>
-                                <div class="form-text">Upload foto bukti transfer biaya penjemputan/kebersihan. Format: JPG, PNG, GIF, BMP.</div>
+                                       accept=".jpg,.jpeg,.png,.gif,.bmp">
+                                <div class="form-text">Upload foto bukti transfer biaya penjemputan/kebersihan. Format: JPG, PNG, GIF, BMP. <strong>Tidak wajib</strong> jika semua sampah adalah daur ulang.</div>
                             </div>
 
                             <div class="mb-3">
@@ -84,17 +91,33 @@
             </div>
             <div class="col-lg-4">
                 <div class="card mb-3">
-                    <div class="card-header bg-soft-success">
-                        <i class="fas fa-calculator me-2"></i>Estimasi Harga
+                    <div class="card-header bg-soft-danger">
+                        <i class="fas fa-credit-card me-2"></i>Biaya Pembuangan
                     </div>
-                    <div class="card-body" id="estimasiPanel">
-                        <div id="estimasiItems">
-                            <div class="text-muted text-center py-3">Belum ada item</div>
+                    <div class="card-body" id="biayaPanel">
+                        <div id="biayaItems">
+                            <div class="text-muted text-center py-3">Belum ada item biasa</div>
                         </div>
                         <hr>
                         <div class="d-flex justify-content-between">
-                            <span class="fw-bold" style="font-size:1.1rem;">Total Estimasi:</span>
-                            <span id="estimasiTotal" class="fw-bold text-success" style="font-size:1.3rem;">Rp 0</span>
+                            <span class="fw-bold">Total Biaya:</span>
+                            <span id="biayaTotal" class="fw-bold text-danger">Rp 0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header bg-soft-success">
+                        <i class="fas fa-recycle me-2"></i>Pendapatan Daur Ulang
+                    </div>
+                    <div class="card-body" id="pendapatanPanel">
+                        <div id="pendapatanItems">
+                            <div class="text-muted text-center py-3">Belum ada item daur ulang</div>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <span class="fw-bold">Masuk Saldo:</span>
+                            <span id="pendapatanTotal" class="fw-bold text-success">Rp 0</span>
                         </div>
                     </div>
                 </div>
@@ -111,7 +134,11 @@
                             </li>
                             <li class="mb-2">
                                 <i class="fas fa-credit-card text-info me-2"></i>
-                                Wajib mengupload bukti transfer biaya penjemputan/kebersihan.
+                                Wajib mengupload bukti transfer jika ada sampah biasa (non-daur ulang).
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-recycle text-success me-2"></i>
+                                Sampah daur ulang masuk <strong>Bank Sampah</strong>, saldo otomatis dikredit setelah diverifikasi.
                             </li>
                             <li class="mb-2">
                                 <i class="fas fa-clock text-warning me-2"></i>
@@ -137,41 +164,87 @@
         </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            var hargaMap = {};
+            var hargaDaurMap = {};
+            var hargaBiasaMap = {};
+            var daurMap = {};
             var namaMap = {};
             var container = document.getElementById('itemsContainer');
+            var buktiInput = document.getElementById('buktiPembayaran');
 
             document.querySelectorAll('.kategori-select option').forEach(function(opt) {
                 if (opt.value) {
-                    hargaMap[opt.value] = parseFloat(opt.getAttribute('data-harga')) || 0;
+                    hargaBiasaMap[opt.value] = parseFloat(opt.getAttribute('data-harga')) || 0;
+                    hargaDaurMap[opt.value] = parseFloat(opt.getAttribute('data-harga-daur')) || 0;
+                    daurMap[opt.value] = opt.getAttribute('data-daur') === 'true';
                     namaMap[opt.value] = opt.text.split(' - ')[0];
                 }
             });
 
+            function cekSemuaDaurUlang() {
+                var rows = container.querySelectorAll('.item-row');
+                var allDaur = true;
+                var anySelected = false;
+                rows.forEach(function(row) {
+                    var katId = row.querySelector('.kategori-select').value;
+                    if (katId) {
+                        anySelected = true;
+                        if (!daurMap[katId]) {
+                            allDaur = false;
+                        }
+                    }
+                });
+                if (anySelected && allDaur) {
+                    document.getElementById('buktiRequiredLabel').style.display = 'none';
+                    document.getElementById('buktiOptionalLabel').style.display = 'inline';
+                    buktiInput.removeAttribute('required');
+                } else {
+                    document.getElementById('buktiRequiredLabel').style.display = 'inline';
+                    document.getElementById('buktiOptionalLabel').style.display = 'none';
+                    buktiInput.setAttribute('required', 'required');
+                }
+            }
+
             function hitungTotal() {
                 var rows = container.querySelectorAll('.item-row');
-                var html = '';
-                var total = 0;
+                var biayaHtml = '';
+                var pendapatanHtml = '';
+                var biayaTotal = 0;
+                var pendapatanTotal = 0;
 
                 rows.forEach(function(row) {
                     var katId = row.querySelector('.kategori-select').value;
                     var berat = parseFloat(row.querySelector('.berat-input').value) || 0;
                     if (!katId || berat <= 0) return;
 
-                    var harga = hargaMap[katId] || 0;
                     var nama = namaMap[katId] || '-';
-                    var subtotal = harga * berat;
-                    total += subtotal;
+                    var isDaur = daurMap[katId];
 
-                    html += '<div class="mb-1 d-flex justify-content-between small">' +
-                        '<span>' + nama + ' \u00d7 ' + berat + ' kg</span>' +
-                        '<strong>Rp ' + subtotal.toLocaleString('id-ID') + '</strong>' +
-                        '</div>';
+                    if (isDaur) {
+                        var harga = hargaDaurMap[katId] || 0;
+                        var subtotal = harga * berat;
+                        pendapatanTotal += subtotal;
+                        pendapatanHtml += '<div class="mb-1 d-flex justify-content-between small">' +
+                            '<span>' + nama + ' \u00d7 ' + berat + ' kg</span>' +
+                            '<strong class="text-success">Rp ' + subtotal.toLocaleString('id-ID') + '</strong>' +
+                            '</div>';
+                    } else {
+                        var harga = hargaBiasaMap[katId] || 0;
+                        var subtotal = harga * berat;
+                        biayaTotal += subtotal;
+                        biayaHtml += '<div class="mb-1 d-flex justify-content-between small">' +
+                            '<span>' + nama + ' \u00d7 ' + berat + ' kg</span>' +
+                            '<strong class="text-danger">Rp ' + subtotal.toLocaleString('id-ID') + '</strong>' +
+                            '</div>';
+                    }
                 });
 
-                document.getElementById('estimasiItems').innerHTML = html ||
-                    '<div class="text-muted text-center py-3">Belum ada item</div>';
-                document.getElementById('estimasiTotal').textContent = 'Rp ' + total.toLocaleString('id-ID');
+                document.getElementById('biayaItems').innerHTML = biayaHtml ||
+                    '<div class="text-muted text-center py-3">Belum ada item biasa</div>';
+                document.getElementById('biayaTotal').textContent = 'Rp ' + biayaTotal.toLocaleString('id-ID');
+                document.getElementById('pendapatanItems').innerHTML = pendapatanHtml ||
+                    '<div class="text-muted text-center py-3">Belum ada item daur ulang</div>';
+                document.getElementById('pendapatanTotal').textContent = 'Rp ' + pendapatanTotal.toLocaleString('id-ID');
+                cekSemuaDaurUlang();
             }
 
             container.addEventListener('change', hitungTotal);

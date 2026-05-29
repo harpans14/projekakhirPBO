@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.trashformer.model.JenisSetoran;
 import com.example.trashformer.model.KategoriSampah;
@@ -21,19 +22,28 @@ import com.example.trashformer.repository.KategoriSampahRepository;
 import com.example.trashformer.repository.SetoranRepository;
 import com.example.trashformer.repository.UserRepository;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 @Service
 public class SetoranService {
 
     private final SetoranRepository setoranRepository;
     private final KategoriSampahRepository kategoriSampahRepository;
     private final UserRepository userRepository;
+    private final BankSampahService bankSampahService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public SetoranService(SetoranRepository setoranRepository,
                           KategoriSampahRepository kategoriSampahRepository,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          BankSampahService bankSampahService) {
         this.setoranRepository = setoranRepository;
         this.kategoriSampahRepository = kategoriSampahRepository;
         this.userRepository = userRepository;
+        this.bankSampahService = bankSampahService;
     }
 
     public Setoran createSetoranSampah(Long wargaId, Long kategoriId, BigDecimal beratKg, String catatan) {
@@ -73,9 +83,14 @@ public class SetoranService {
         setoran.setKategori(kategori);
         setoran.setBeratKg(beratKg);
 
-        BigDecimal hargaPerKg = kategori.getHargaPerKg();
-        if (hargaPerKg != null) {
-            setoran.setTotalHarga(beratKg.multiply(hargaPerKg));
+        BigDecimal harga;
+        if (Boolean.TRUE.equals(kategori.getIsDaurUlang()) && kategori.getHargaDaurUlang() != null) {
+            harga = kategori.getHargaDaurUlang();
+        } else {
+            harga = kategori.getHargaPerKg();
+        }
+        if (harga != null) {
+            setoran.setTotalHarga(beratKg.multiply(harga));
         }
 
         if (alamatJemput != null && !alamatJemput.trim().isEmpty()) {
@@ -91,6 +106,29 @@ public class SetoranService {
         }
 
         return setoranRepository.save(setoran);
+    }
+
+    @Transactional
+    public Setoran terimaSetoranDaurUlang(Long setoranId, Long petugasId) {
+        Setoran setoran = setoranRepository.findById(setoranId)
+                .orElseThrow(() -> new RuntimeException("Setoran tidak ditemukan"));
+        User petugas = userRepository.findById(petugasId)
+                .orElseThrow(() -> new RuntimeException("Petugas tidak ditemukan"));
+
+        setoran.setStatus(StatusSetoran.DITERIMA);
+        setoran.setPetugas(petugas);
+        setoran.setStatusPenjemputan(StatusPenjemputan.SEDANG_DIJEMPUT);
+
+        Setoran saved = setoranRepository.save(setoran);
+        entityManager.flush();
+
+        if (saved.getTotalHarga() != null) {
+            String keterangan = "Setoran daur ulang: " + (saved.getKategori() != null ? saved.getKategori().getNama() : "") +
+                    " " + saved.getBeratKg() + " kg";
+            bankSampahService.kreditSaldo(saved.getWarga().getId(), saved.getTotalHarga(), keterangan, saved.getId());
+        }
+
+        return saved;
     }
 
     public Setoran verifikasiSetoran(Long setoranId, Long petugasId, StatusSetoran status, String catatan) {

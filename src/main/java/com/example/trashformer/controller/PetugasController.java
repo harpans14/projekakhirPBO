@@ -14,14 +14,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.trashformer.model.KategoriSampah;
+import com.example.trashformer.model.PenarikanSaldo;
 import com.example.trashformer.model.Role;
 import com.example.trashformer.model.Setoran;
 import com.example.trashformer.model.StatusPembayaran;
+import com.example.trashformer.model.StatusPenarikan;
 import com.example.trashformer.model.StatusPenjemputan;
 import com.example.trashformer.model.StatusSetoran;
 import com.example.trashformer.model.User;
 import com.example.trashformer.repository.KategoriSampahRepository;
 import com.example.trashformer.repository.SetoranRepository;
+import com.example.trashformer.service.BankSampahService;
 import com.example.trashformer.service.SetoranService;
 import com.example.trashformer.service.UserService;
 
@@ -33,15 +36,18 @@ public class PetugasController {
     private final SetoranService setoranService;
     private final KategoriSampahRepository kategoriSampahRepository;
     private final SetoranRepository setoranRepository;
+    private final BankSampahService bankSampahService;
 
     public PetugasController(UserService userService,
                              SetoranService setoranService,
                              KategoriSampahRepository kategoriSampahRepository,
-                             SetoranRepository setoranRepository) {
+                             SetoranRepository setoranRepository,
+                             BankSampahService bankSampahService) {
         this.userService = userService;
         this.setoranService = setoranService;
         this.kategoriSampahRepository = kategoriSampahRepository;
         this.setoranRepository = setoranRepository;
+        this.bankSampahService = bankSampahService;
     }
 
     private void addUserToModel(Authentication authentication, Model model) {
@@ -150,7 +156,20 @@ public class PetugasController {
     @GetMapping("/verifikasi")
     public String verifikasiSetoran(Authentication authentication, Model model) {
         addUserToModel(authentication, model);
-        model.addAttribute("setoranList", setoranService.getSetoranByStatusPembayaran(StatusPembayaran.MENUNGGU_VERIFIKASI));
+        List<Setoran> allMenunggu = setoranService.getSetoranByStatusPembayaran(StatusPembayaran.MENUNGGU_VERIFIKASI);
+        List<Setoran> setoranBiasa = allMenunggu.stream()
+                .filter(s -> s.getKategori() == null || !Boolean.TRUE.equals(s.getKategori().getIsDaurUlang()))
+                .toList();
+        model.addAttribute("setoranList", setoranBiasa);
+
+        List<Setoran> allSetoran = setoranService.getAllSetoranSampah();
+        List<Setoran> daurUlangMenunggu = allSetoran.stream()
+                .filter(s -> s.getKategori() != null
+                        && Boolean.TRUE.equals(s.getKategori().getIsDaurUlang())
+                        && s.getStatus() == StatusSetoran.MENUNGGU)
+                .toList();
+        model.addAttribute("daurUlangList", daurUlangMenunggu);
+
         model.addAttribute("penjemputanList", setoranService.getSetoranByStatus(StatusSetoran.DITERIMA));
         return "petugas/verifikasi";
     }
@@ -199,6 +218,73 @@ public class PetugasController {
         } catch (Exception e) {
             redirectAttrs.addFlashAttribute("error", "Gagal mengupdate status penjemputan: " + e.getMessage());
             return "redirect:/petugas/verifikasi";
+        }
+    }
+
+    @PostMapping("/verifikasi/daur-ulang/{id}")
+    public String terimaDaurUlang(@PathVariable Long id,
+                                  Authentication authentication,
+                                  RedirectAttributes redirectAttrs) {
+        try {
+            User petugas = getCurrentUser(authentication);
+            if (petugas == null) {
+                redirectAttrs.addFlashAttribute("error", "Petugas tidak ditemukan");
+                return "redirect:/petugas/verifikasi";
+            }
+            setoranService.terimaSetoranDaurUlang(id, petugas.getId());
+            redirectAttrs.addFlashAttribute("success", "Setoran daur ulang diterima, saldo warga telah dikredit");
+            return "redirect:/petugas/verifikasi";
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "Gagal memverifikasi setoran daur ulang: " + e.getMessage());
+            return "redirect:/petugas/verifikasi";
+        }
+    }
+
+    @GetMapping("/penarikan")
+    public String listPenarikan(Authentication authentication, Model model) {
+        addUserToModel(authentication, model);
+        model.addAttribute("penarikanList", bankSampahService.getPenarikanByStatus(StatusPenarikan.MENUNGGU));
+        model.addAttribute("riwayatPenarikan", bankSampahService.getPenarikanByStatus(StatusPenarikan.DISETUJUI));
+        model.addAttribute("riwayatPenarikanDitolak", bankSampahService.getPenarikanByStatus(StatusPenarikan.DITOLAK));
+        return "petugas/penarikan";
+    }
+
+    @PostMapping("/penarikan/{id}/setujui")
+    public String setujuiPenarikan(@PathVariable Long id,
+                                   Authentication authentication,
+                                   RedirectAttributes redirectAttrs) {
+        try {
+            User petugas = getCurrentUser(authentication);
+            if (petugas == null) {
+                redirectAttrs.addFlashAttribute("error", "Petugas tidak ditemukan");
+                return "redirect:/petugas/penarikan";
+            }
+            bankSampahService.setujuiPenarikan(id, petugas.getId());
+            redirectAttrs.addFlashAttribute("success", "Penarikan saldo disetujui");
+            return "redirect:/petugas/penarikan";
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "Gagal menyetujui penarikan: " + e.getMessage());
+            return "redirect:/petugas/penarikan";
+        }
+    }
+
+    @PostMapping("/penarikan/{id}/tolak")
+    public String tolakPenarikan(@PathVariable Long id,
+                                 @RequestParam(required = false) String catatan,
+                                 Authentication authentication,
+                                 RedirectAttributes redirectAttrs) {
+        try {
+            User petugas = getCurrentUser(authentication);
+            if (petugas == null) {
+                redirectAttrs.addFlashAttribute("error", "Petugas tidak ditemukan");
+                return "redirect:/petugas/penarikan";
+            }
+            bankSampahService.tolakPenarikan(id, petugas.getId(), catatan);
+            redirectAttrs.addFlashAttribute("success", "Penarikan saldo ditolak");
+            return "redirect:/petugas/penarikan";
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "Gagal menolak penarikan: " + e.getMessage());
+            return "redirect:/petugas/penarikan";
         }
     }
 

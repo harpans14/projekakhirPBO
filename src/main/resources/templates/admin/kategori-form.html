@@ -18,10 +18,33 @@
                                    th:value="${kategori.nama}" required minlength="1">
                         </div>
                         <div class="col-md-6">
+                            <div class="form-check mt-4">
+                                <input type="checkbox" class="form-check-input" id="isDaurUlang" name="isDaurUlang" value="true"
+                                       th:checked="${kategori.isDaurUlang == true}">
+                                <label class="form-check-label" for="isDaurUlang">
+                                    <i class="fas fa-recycle text-success me-1"></i>Kategori Daur Ulang (Bank Sampah)
+                                </label>
+                                <div class="form-text">Centang jika sampah ini bisa didaur ulang. Warga akan <strong>dibayar</strong> per kg.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6" id="hargaBiasaGroup"
+                             th:style="${kategori.isDaurUlang == true} ? 'display:none;' : 'display:block;'">
                             <label for="hargaPerKg" class="form-label">Harga per Kg (Rp) <span class="text-danger">*</span></label>
                             <input type="number" id="hargaPerKg" name="hargaPerKg" class="form-control"
                                    step="100" min="0" required
                                    th:value="${kategori.hargaPerKg}">
+                            <div class="form-text">Biaya yang dibayarkan warga per kilogram untuk pembuangan sampah ini.</div>
+                        </div>
+                        <div class="col-md-6" id="hargaDaurUlangGroup"
+                             th:style="${kategori.isDaurUlang == true} ? 'display:block;' : 'display:none;'">
+                            <label for="hargaDaurUlang" class="form-label">Harga Daur Ulang per Kg (Rp) <span class="text-danger">*</span></label>
+                            <input type="number" id="hargaDaurUlang" name="hargaDaurUlang" class="form-control"
+                                   step="100" min="0" required
+                                   placeholder="Contoh: 3000"
+                                   th:value="${kategori.hargaDaurUlang}">
+                            <div class="form-text">Harga yang <strong>dibayarkan ke warga</strong> per kilogram untuk setoran daur ulang.</div>
                         </div>
                     </div>
                     <div class="mt-4 d-flex gap-2">
@@ -36,5 +59,14 @@
             </div>
         </div>
     </div>
+    <script>
+        document.getElementById('isDaurUlang').addEventListener('change', function() {
+            var daur = this.checked;
+            document.getElementById('hargaDaurUlangGroup').style.display = daur ? 'block' : 'none';
+            document.getElementById('hargaBiasaGroup').style.display = daur ? 'none' : 'block';
+            document.getElementById('hargaPerKg').required = !daur;
+            document.getElementById('hargaDaurUlang').required = daur;
+        });
+    </script>
 </body>
 </html>

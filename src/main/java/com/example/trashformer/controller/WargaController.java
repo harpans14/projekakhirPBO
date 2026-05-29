@@ -22,11 +22,13 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.trashformer.model.KategoriSampah;
+import com.example.trashformer.model.PenarikanSaldo;
 import com.example.trashformer.model.Setoran;
 import com.example.trashformer.model.User;
 import com.example.trashformer.repository.KategoriSampahRepository;
 import com.example.trashformer.repository.SetoranRepository;
 import com.example.trashformer.repository.UserRepository;
+import com.example.trashformer.service.BankSampahService;
 import com.example.trashformer.service.SetoranService;
 import com.example.trashformer.service.UserService;
 
@@ -40,6 +42,7 @@ public class WargaController {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final KategoriSampahRepository kategoriSampahRepository;
+    private final BankSampahService bankSampahService;
 
     @Value("${app.upload.dir:uploads/bukti_pembayaran}")
     private String uploadDir;
@@ -49,13 +52,15 @@ public class WargaController {
                            SetoranRepository setoranRepository,
                            PasswordEncoder passwordEncoder,
                            UserRepository userRepository,
-                           KategoriSampahRepository kategoriSampahRepository) {
+                           KategoriSampahRepository kategoriSampahRepository,
+                           BankSampahService bankSampahService) {
         this.userService = userService;
         this.setoranService = setoranService;
         this.setoranRepository = setoranRepository;
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
         this.kategoriSampahRepository = kategoriSampahRepository;
+        this.bankSampahService = bankSampahService;
     }
 
     private void addUserToModel(Authentication authentication, Model model) {
@@ -100,6 +105,7 @@ public class WargaController {
             model.addAttribute("totalSampah", (long) totalBerat);
             model.addAttribute("totalSetoran", sampahList.size());
             model.addAttribute("totalUang", (long) totalUangDisetor);
+            model.addAttribute("saldo", bankSampahService.getSaldo(wargaId));
 
             List<Setoran> recent = sampahList.size() > 5 ? sampahList.subList(0, 5) : sampahList;
             model.addAttribute("recentSetoran", recent);
@@ -238,6 +244,11 @@ public class WargaController {
                 return "redirect:/warga/laporan";
             }
 
+            boolean allDaurUlang = kategoriIds.stream().allMatch(id ->
+                    kategoriSampahRepository.findById(id)
+                            .map(KategoriSampah::getIsDaurUlang)
+                            .orElse(false));
+
             String fileName = null;
             if (buktiPembayaran != null && !buktiPembayaran.isEmpty()) {
                 String originalName = buktiPembayaran.getOriginalFilename();
@@ -260,27 +271,75 @@ public class WargaController {
                 }
             }
 
-            if (fileName == null) {
+            if (!allDaurUlang && fileName == null) {
                 redirectAttrs.addFlashAttribute("error", "Bukti pembayaran wajib diunggah");
                 return "redirect:/warga/laporan";
             }
 
+            boolean hasDaurUlang = false;
+            boolean hasBiasa = false;
             for (int i = 0; i < kategoriIds.size(); i++) {
-                setoranService.createSetoranSampahWarga(
-                        warga.getId(),
-                        kategoriIds.get(i),
-                        beratKgs.get(i),
-                        alamatJemput,
-                        catatanTambahan,
-                        fileName
-                );
+                boolean isDaurUlang = kategoriSampahRepository.findById(kategoriIds.get(i))
+                        .map(KategoriSampah::getIsDaurUlang)
+                        .orElse(false);
+                if (isDaurUlang) {
+                    hasDaurUlang = true;
+                    setoranService.createSetoranSampahWarga(
+                            warga.getId(), kategoriIds.get(i), beratKgs.get(i),
+                            alamatJemput, catatanTambahan, null);
+                } else {
+                    hasBiasa = true;
+                    setoranService.createSetoranSampahWarga(
+                            warga.getId(), kategoriIds.get(i), beratKgs.get(i),
+                            alamatJemput, catatanTambahan, fileName);
+                }
             }
 
-            redirectAttrs.addFlashAttribute("success", "Laporan setoran berhasil dikirim, menunggu verifikasi pembayaran oleh petugas");
+            String msg;
+            if (hasDaurUlang && !hasBiasa) {
+                msg = "Setoran daur ulang berhasil dikirim, menunggu verifikasi petugas";
+            } else if (hasDaurUlang) {
+                msg = "Laporan berhasil dikirim. Setoran biasa menunggu verifikasi pembayaran, setoran daur ulang menunggu verifikasi petugas";
+            } else {
+                msg = "Laporan setoran berhasil dikirim, menunggu verifikasi pembayaran oleh petugas";
+            }
+            redirectAttrs.addFlashAttribute("success", msg);
             return "redirect:/warga/dashboard";
         } catch (Exception e) {
             redirectAttrs.addFlashAttribute("error", "Gagal mengirim laporan: " + e.getMessage());
             return "redirect:/warga/laporan";
+        }
+    }
+
+    @GetMapping("/bank-saldo")
+    public String bankSaldo(Authentication authentication, Model model) {
+        addUserToModel(authentication, model);
+        User warga = getCurrentUser(authentication);
+        if (warga != null) {
+            model.addAttribute("saldo", bankSampahService.getSaldo(warga.getId()));
+            model.addAttribute("riwayatSaldo", bankSampahService.getRiwayatSaldo(warga.getId()));
+            model.addAttribute("riwayatPenarikan", bankSampahService.getRiwayatPenarikan(warga.getId()));
+        }
+        return "warga/bank-saldo";
+    }
+
+    @PostMapping("/bank-saldo/tarik")
+    public String tarikSaldo(@RequestParam BigDecimal jumlah,
+                             @RequestParam(required = false) String catatan,
+                             Authentication authentication,
+                             RedirectAttributes redirectAttrs) {
+        try {
+            User warga = getCurrentUser(authentication);
+            if (warga == null) {
+                redirectAttrs.addFlashAttribute("error", "User tidak ditemukan");
+                return "redirect:/warga/bank-saldo";
+            }
+            bankSampahService.requestPenarikan(warga.getId(), jumlah, catatan);
+            redirectAttrs.addFlashAttribute("success", "Permintaan penarikan saldo berhasil dikirim, menunggu persetujuan petugas");
+            return "redirect:/warga/bank-saldo";
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "Gagal mengirim permintaan: " + e.getMessage());
+            return "redirect:/warga/bank-saldo";
         }
     }
 }
