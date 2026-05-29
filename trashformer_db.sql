@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: May 18, 2026 at 03:12 AM
+-- Host: localhost
+-- Generation Time: May 29, 2026 at 04:49 PM
 -- Server version: 10.4.32-MariaDB
--- PHP Version: 8.1.25
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -20,8 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `trashformer_db`
 --
-CREATE DATABASE IF NOT EXISTS `trashformer_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-USE `trashformer_db`;
 
 -- --------------------------------------------------------
 
@@ -36,6 +34,15 @@ CREATE TABLE `kategori_sampah` (
   `harga_per_kg` decimal(10,2) DEFAULT NULL,
   `nama` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `kategori_sampah`
+--
+
+INSERT INTO `kategori_sampah` (`id`, `created_at`, `deskripsi`, `harga_per_kg`, `nama`) VALUES
+(1, '2026-05-23 12:04:17.000000', NULL, 1000.00, 'B3'),
+(2, '2026-05-23 12:28:45.000000', NULL, 1500.00, 'Plastik'),
+(3, '2026-05-23 12:28:55.000000', NULL, 500.00, 'organik');
 
 -- --------------------------------------------------------
 
@@ -65,6 +72,17 @@ CREATE TABLE `setoran` (
   `updated_at` datetime(6) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `setoran`
+--
+
+INSERT INTO `setoran` (`id`, `jenis_setoran`, `warga_id`, `petugas_id`, `kategori_id`, `berat_kg`, `total_harga`, `status`, `alamat_jemput`, `bukti_pembayaran`, `status_pembayaran`, `status_penjemputan`, `jumlah_uang`, `jenis_uang`, `deskripsi`, `catatan`, `jenis_sampah`, `created_at`, `updated_at`) VALUES
+(1, 'SAMPAH', 3, NULL, NULL, 5.50, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Setoran sampah organik', 'ORGANIK', '2026-05-18 07:24:10.000000', NULL),
+(2, 'UANG', 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 50000.00, NULL, NULL, 'Iuran kebersihan', NULL, '2026-05-18 07:24:10.000000', NULL),
+(3, 'SAMPAH', 4, 2, 1, 4.00, 4000.00, 'DITERIMA', NULL, NULL, 'DISETUJUI', 'SELESAI', NULL, NULL, NULL, 'sampah', NULL, '2026-05-23 12:04:57.000000', '2026-05-23 12:07:06.000000'),
+(4, 'SAMPAH', 4, 2, 1, 4.00, 4000.00, 'DITERIMA', 'katapang', '601f7be3-243e-4eb9-ac50-b3abe2fbc213.jpg', 'DISETUJUI', 'SELESAI', NULL, NULL, NULL, 'haha', NULL, '2026-05-23 12:06:19.000000', '2026-05-23 12:07:09.000000'),
+(6, 'SAMPAH', 4, 2, 1, 6.00, 6000.00, 'DITERIMA', 'rancaekek', 'eefbb088-0c23-4b6d-898a-83371813f4a0.jpg', 'DISETUJUI', 'SELESAI', NULL, NULL, NULL, 'yfyfy', NULL, '2026-05-23 12:27:40.000000', '2026-05-23 12:28:07.000000');
+
 -- --------------------------------------------------------
 
 --
@@ -89,10 +107,10 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `nama`, `username`, `password`, `role`, `created_at`, `updated_at`, `alamat`, `is_active`, `no_telepon`) VALUES
-(1, 'Administrator', 'admin', '$2a$10$C/zMmLRMy.hva282Zyg7O.GPZEY9mrzk1N8lzjITvAbOr84CEzfl2', 'ADMIN', NULL, NULL, NULL, NULL, NULL),
-(2, 'Petugas Sampah', 'petugas', '$2a$10$C/zMmLRMy.hva282Zyg7O.GPZEY9mrzk1N8lzjITvAbOr84CEzfl2', 'PETUGAS', NULL, NULL, NULL, NULL, NULL),
-(3, 'Budi Warga', 'warga', '$2a$10$C/zMmLRMy.hva282Zyg7O.GPZEY9mrzk1N8lzjITvAbOr84CEzfl2', 'WARGA', NULL, NULL, NULL, NULL, NULL),
-(4, 'harpan', 'harpan', '$2a$10$wOhX0MQXSx30U5RqqHydy.r7bACY0dB5hKyWDYNaEl8OMvN9jC8Wy', 'WARGA', '2026-05-18 07:35:45.000000', '2026-05-18 07:35:45.000000', NULL, NULL, NULL),
+(1, 'Administrator', 'admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'ADMIN', NULL, NULL, NULL, b'1', NULL),
+(2, 'Petugas Sampah', 'petugas', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'PETUGAS', NULL, NULL, NULL, b'1', NULL),
+(3, 'Budi Warga', 'warga', '$2a$10$C/zMmLRMy.hva282Zyg7O.GPZEY9mrzk1N8lzjITvAbOr84CEzfl2', 'WARGA', NULL, NULL, NULL, b'1', NULL),
+(4, 'harpan', 'harpan', '$2a$10$wOhX0MQXSx30U5RqqHydy.r7bACY0dB5hKyWDYNaEl8OMvN9jC8Wy', 'WARGA', '2026-05-18 07:35:45.000000', '2026-05-18 07:35:45.000000', NULL, b'1', NULL),
 (5, 'harpan', 'harpan12', '$2a$10$32R5UVeI2uRA.eG0KlrN9eX2KQsT7ASrwyG1.O05wW51EnNqPldvq', 'WARGA', '2026-05-18 07:54:28.000000', '2026-05-18 07:54:28.000000', NULL, b'1', NULL);
 
 --
@@ -130,19 +148,19 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `kategori_sampah`
 --
 ALTER TABLE `kategori_sampah`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `setoran`
 --
 ALTER TABLE `setoran`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Constraints for dumped tables
@@ -152,9 +170,9 @@ ALTER TABLE `users`
 -- Constraints for table `setoran`
 --
 ALTER TABLE `setoran`
-  ADD CONSTRAINT `fk_setoran_warga` FOREIGN KEY (`warga_id`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `fk_setoran_kategori` FOREIGN KEY (`kategori_id`) REFERENCES `kategori_sampah` (`id`),
   ADD CONSTRAINT `fk_setoran_petugas` FOREIGN KEY (`petugas_id`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `fk_setoran_kategori` FOREIGN KEY (`kategori_id`) REFERENCES `kategori_sampah` (`id`);
+  ADD CONSTRAINT `fk_setoran_warga` FOREIGN KEY (`warga_id`) REFERENCES `users` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

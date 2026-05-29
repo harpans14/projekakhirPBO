@@ -44,17 +44,17 @@
 
         <div class="row g-4 mb-4">
             <div class="col-md-8">
-                <div class="card">
+                <div class="card h-100">
                     <div class="card-header">Grafik Setoran per Bulan</div>
-                    <div class="card-body">
-                        <canvas id="chartWarga" height="200"></canvas>
+                    <div class="card-body d-flex align-items-center" style="max-height:330px;">
+                        <canvas id="chartWarga" class="w-100"></canvas>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card">
+                <div class="card h-100">
                     <div class="card-header">Menu Cepat</div>
-                    <div class="card-body">
+                    <div class="card-body" style="max-height:330px;">
                         <div class="d-grid gap-2">
                             <a th:href="@{/warga/laporan}" class="btn btn-success">
                                 <i class="fas fa-plus-circle me-2"></i>Buat Laporan Sampah
@@ -107,34 +107,56 @@
                 </div>
             </div>
         </div>
-    </div>
-
     <script th:inline="javascript">
         /*<![CDATA[*/
-        var ctxWarga = document.getElementById('chartWarga');
-        if (ctxWarga) {
-            new Chart(ctxWarga, {
-                type: 'bar',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
-                    datasets: [{
-                        label: 'Setoran (kg)',
-                        data: [3, 5, 2, 8, 4, 6, 7, 5, 3, 6, 4, 7],
-                        backgroundColor: '#2ecc71',
-                        borderColor: '#27ae60',
-                        borderWidth: 1,
-                        borderRadius: 5
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true } }
+        window.addEventListener('load', function() {
+            var ctxWarga = document.getElementById('chartWarga');
+            if (ctxWarga) {
+                var dataBulanan = /*[[${bulanData}]]*/ [0,0,0,0,0,0,0,0,0,0,0,0];
+                var adaData = dataBulanan.some(function(v) { return v > 0; });
+                if (adaData) {
+                    new Chart(ctxWarga, {
+                        type: 'line',
+                        data: {
+                            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
+                            datasets: [{
+                                label: 'Setoran (kg)',
+                                data: dataBulanan,
+                                backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                                borderColor: '#2ecc71',
+                                borderWidth: 2,
+                                pointBackgroundColor: '#2ecc71',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                tension: 0.3,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: { display: true, text: 'Berat (KG)' }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    ctxWarga.style.display = 'none';
+                    ctxWarga.insertAdjacentHTML('afterend',
+                        '<div class="text-center text-muted py-4">' +
+                        '<i class="fas fa-chart-line fa-3x mb-3"></i>' +
+                        '<p class="mb-0">Belum ada data setoran tahun ini</p></div>');
                 }
-            });
-        }
+            }
+        });
         /*]]>*/
     </script>
+    </div>
 </body>
 </html>

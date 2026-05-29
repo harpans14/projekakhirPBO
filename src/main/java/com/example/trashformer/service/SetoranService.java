@@ -233,7 +233,7 @@ public class SetoranService {
         return setoranRepository.sumBeratPerKategori();
     }
 
-    public List<Object[]> getJumlahSetoranPerBulan(int year) {
-        return setoranRepository.countSetoranPerBulan(year);
+    public List<Object[]> getBeratPerBulan(int year) {
+        return setoranRepository.sumBeratPerBulan(year);
     }
 }

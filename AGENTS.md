@@ -1,55 +1,25 @@
-# Trashformer — Bank Sampah App
+# AGENTS.md
 
-## Stack
-- Java 17, Spring Boot 3.3.5, Maven wrapper (`mvnw.cmd`)
-- MySQL + JPA/Hibernate (`ddl-auto=update` — no Flyway/Liquibase)
-- Thymeleaf (Layout Dialect), Spring Security (BCrypt), Devtools
-- No tests exist (`src/test/` is empty)
+## Project Facts
+- Single-module Spring Boot 3.3.5 app on Java 17; use `./mvnw` for Maven commands.
+- Main class is `src/main/java/com/example/TrashformerApplication.java`; it sits in `com.example` so Spring scans `com.example.trashformer`.
+- MVC is server-rendered Thymeleaf: controllers live in `src/main/java/com/example/trashformer/controller`, templates in `src/main/resources/templates`, static assets in `src/main/resources/static`.
 
-## Quick Start
-```powershell
-# Run (requires MySQL at localhost:3306, schema `trashformer_db`)
-.\mvnw.cmd spring-boot:run
+## Commands
+- Run locally: `./mvnw spring-boot:run`.
+- Verify build: `./mvnw clean package`.
+- Run tests if tests are added: `./mvnw test`; there is currently no `src/test` tree and `pom.xml` has no test starter.
+- No CI, lint, formatter, or codegen config exists in this repo; do not invent extra repo-specific checks.
 
-# Package
-.\mvnw.cmd clean package
-```
+## Runtime
+- `src/main/resources/application.properties` expects MySQL/MariaDB at `jdbc:mysql://localhost:3306/trashformer_db` with user `root` and blank password; Hibernate uses `spring.jpa.hibernate.ddl-auto=update`.
+- No Flyway/Liquibase is configured; `trashformer_db.sql`, `migrasi_setoran_unified.sql`, and `fix_user_lawas.sql` are manual SQL scripts.
+- `migrasi_setoran_unified.sql` renames/drops old setoran tables; do not run it casually.
+- Uploads go to `uploads/bukti_pembayaran` and are served from `/files/bukti_pembayaran/**`; avoid deleting local files under `uploads/`.
 
-## Database
-- Schema + seed data: `trashformer_db.sql` (import once)
-- Migration scripts: `migrasi_setoran_unified.sql`, `fix_user_lawas.sql`
-- JPA `ddl-auto=update` creates/updates tables; you must create the schema manually
-- Default users (password from seed): admin (ADMIN), petugas (PETUGAS), warga (WARGA)
-
-## Project Structure
-```
-src/main/java/com/example/trashformer/
-  config/   — SecurityConfig, WebConfig
-  controller/ — AuthController, DashboardController, AdminController, PetugasController, WargaController
-  model/    — User, Setoran, KategoriSampah + enums (Role, StatusSetoran, StatusPembayaran, etc.)
-  repository/ — JPA repos
-  service/  — UserService, SetoranService, CustomUserDetailsService
-```
-
-## Key Conventions
-- All views are Thymeleaf templates in `src/main/resources/templates/` (admin/, petugas/, warga/)
-- Layout via `layout.html` using Thymeleaf Layout Dialect (not fragments)
-- Uploaded payment proofs → `uploads/bukti_pembayaran/`, served at `/files/bukti_pembayaran/**`
-- Session: 30min timeout, cookie-based, single-session per user
-- File uploads: max 5MB per file, 10MB per request
-- Role-based routing: `/admin/**`, `/petugas/**`, `/warga/**` — each controller uses `@RequestMapping`
-- Static resources at `/css/**`, `/js/**` in `src/main/resources/static/`
-
-## Routes Summary
-| Path | Role | Purpose |
-|------|------|---------|
-| `/login`, `/register` | public | Auth |
-| `/admin/**` | ADMIN | Users CRUD, categories, all setoran |
-| `/petugas/**` | PETUGAS | Create/verify setoran, manage pickups |
-| `/warga/**` | WARGA | Submit setoran, profile, history |
-
-## Notable Quirks
-- Setoran table is **unified** (both waste deposits & money deposits via `jenis_setoran` enum)
-- Payment verification flow: warga uploads proof → petugas verifies → pickup scheduled
-- Admin reset password defaults to `"123456"`
-- Devtools live-reload active (runtime scope)
+## Auth And Data
+- Passwords are BCrypt encoded by `SecurityConfig.passwordEncoder()` and `UserService`; never store plaintext in `users.password`.
+- Roles are enum values `ADMIN`, `PETUGAS`, `WARGA`; route guards map them to `/admin/**`, `/petugas/**`, and `/warga/**`.
+- `CustomUserDetailsService` only blocks users when `is_active` is non-null false; NULL legacy values still authenticate.
+- `Setoran` is the unified entity/table for both trash and money deposits, split by `jenis_setoran` (`SAMPAH` or `UANG`).
+- `Setoran.onCreate()` defaults status fields only for `SAMPAH`; `UANG` deposits intentionally keep those status fields null.

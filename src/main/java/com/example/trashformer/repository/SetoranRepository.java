@@ -44,14 +44,14 @@ public interface SetoranRepository extends JpaRepository<Setoran, Long> {
     @Query("SELECT COALESCE(SUM(s.beratKg), 0) FROM Setoran s WHERE s.status = 'DITERIMA'")
     Double sumAllBeratDiterima();
 
-    @Query("SELECT COUNT(s) FROM Setoran s WHERE s.createdAt BETWEEN :start AND :end")
-    long countByDateRange(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
-
     @Query("SELECT k.nama, COALESCE(SUM(s.beratKg), 0) FROM Setoran s JOIN s.kategori k WHERE s.status = 'DITERIMA' GROUP BY k.nama")
     List<Object[]> sumBeratPerKategori();
 
-    @Query("SELECT MONTH(s.createdAt), COUNT(s) FROM Setoran s WHERE YEAR(s.createdAt) = :year GROUP BY MONTH(s.createdAt) ORDER BY MONTH(s.createdAt)")
-    List<Object[]> countSetoranPerBulan(@Param("year") int year);
+    @Query("SELECT MONTH(s.createdAt), COALESCE(SUM(s.beratKg), 0) FROM Setoran s WHERE YEAR(s.createdAt) = :year AND s.jenisSetoran = 'SAMPAH' GROUP BY MONTH(s.createdAt) ORDER BY MONTH(s.createdAt)")
+    List<Object[]> sumBeratPerBulan(@Param("year") int year);
+
+    @Query("SELECT MONTH(s.createdAt), COALESCE(SUM(s.beratKg), 0) FROM Setoran s WHERE s.warga.id = :wargaId AND YEAR(s.createdAt) = :year AND s.jenisSetoran = 'SAMPAH' GROUP BY MONTH(s.createdAt) ORDER BY MONTH(s.createdAt)")
+    List<Object[]> sumBeratPerBulanByWarga(@Param("wargaId") Long wargaId, @Param("year") int year);
 
     @Query("SELECT COALESCE(SUM(s.jumlahUang), 0) FROM Setoran s WHERE s.jenisSetoran = 'UANG' AND s.jenisUang = :jenis")
     Double sumJumlahUangByJenis(@Param("jenis") String jenis);

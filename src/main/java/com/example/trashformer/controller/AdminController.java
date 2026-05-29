@@ -3,6 +3,7 @@ package com.example.trashformer.controller;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -75,14 +76,20 @@ public class AdminController {
         model.addAttribute("kategoriLabels", kategoriLabels);
         model.addAttribute("kategoriValues", kategoriValues);
 
+        List<String> warnaKategori = Arrays.asList(
+            "#2ecc71", "#3498db", "#e74c3c", "#f39c12", "#9b59b6",
+            "#1abc9c", "#e67e22", "#34495e", "#16a085", "#c0392b"
+        );
+        model.addAttribute("warnaKategori", warnaKategori);
+
         int currentYear = LocalDate.now().getYear();
-        List<Object[]> bulanData = setoranService.getJumlahSetoranPerBulan(currentYear);
-        long[] bulanValues = new long[12];
+        List<Object[]> bulanData = setoranService.getBeratPerBulan(currentYear);
+        double[] bulanValues = new double[12];
         for (Object[] row : bulanData) {
             int month = ((Number) row[0]).intValue();
-            long count = ((Number) row[1]).longValue();
+            double berat = ((Number) row[1]).doubleValue();
             if (month >= 1 && month <= 12) {
-                bulanValues[month - 1] = count;
+                bulanValues[month - 1] = berat;
             }
         }
         model.addAttribute("bulanData", bulanValues);

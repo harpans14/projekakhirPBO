@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -102,6 +103,18 @@ public class WargaController {
 
             List<Setoran> recent = sampahList.size() > 5 ? sampahList.subList(0, 5) : sampahList;
             model.addAttribute("recentSetoran", recent);
+
+            int currentYear = LocalDate.now().getYear();
+            List<Object[]> bulanData = setoranRepository.sumBeratPerBulanByWarga(wargaId, currentYear);
+            double[] bulanValues = new double[12];
+            for (Object[] row : bulanData) {
+                int month = ((Number) row[0]).intValue();
+                double berat = ((Number) row[1]).doubleValue();
+                if (month >= 1 && month <= 12) {
+                    bulanValues[month - 1] = berat;
+                }
+            }
+            model.addAttribute("bulanData", bulanValues);
         }
         return "warga/dashboard";
     }
@@ -206,8 +219,8 @@ public class WargaController {
     }
 
     @PostMapping("/laporan/simpan")
-    public String laporanSimpan(@RequestParam Long kategoriId,
-                                @RequestParam BigDecimal beratKg,
+    public String laporanSimpan(@RequestParam("kategoriIds") List<Long> kategoriIds,
+                                @RequestParam("beratKgs") List<BigDecimal> beratKgs,
                                 @RequestParam(required = false) String alamatJemput,
                                 @RequestParam(required = false) String catatanTambahan,
                                 @RequestParam(value = "buktiPembayaran", required = false) MultipartFile buktiPembayaran,
@@ -217,6 +230,11 @@ public class WargaController {
             User warga = getCurrentUser(authentication);
             if (warga == null) {
                 redirectAttrs.addFlashAttribute("error", "User tidak ditemukan");
+                return "redirect:/warga/laporan";
+            }
+
+            if (kategoriIds == null || kategoriIds.isEmpty()) {
+                redirectAttrs.addFlashAttribute("error", "Pilih minimal satu jenis sampah");
                 return "redirect:/warga/laporan";
             }
 
@@ -247,14 +265,16 @@ public class WargaController {
                 return "redirect:/warga/laporan";
             }
 
-            setoranService.createSetoranSampahWarga(
-                    warga.getId(),
-                    kategoriId,
-                    beratKg,
-                    alamatJemput,
-                    catatanTambahan,
-                    fileName
-            );
+            for (int i = 0; i < kategoriIds.size(); i++) {
+                setoranService.createSetoranSampahWarga(
+                        warga.getId(),
+                        kategoriIds.get(i),
+                        beratKgs.get(i),
+                        alamatJemput,
+                        catatanTambahan,
+                        fileName
+                );
+            }
 
             redirectAttrs.addFlashAttribute("success", "Laporan setoran berhasil dikirim, menunggu verifikasi pembayaran oleh petugas");
             return "redirect:/warga/dashboard";

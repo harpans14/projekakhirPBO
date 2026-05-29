@@ -115,8 +115,8 @@ public class PetugasController {
 
     @PostMapping("/setoran/simpan")
     public String simpanSetoran(@RequestParam Long wargaId,
-                                @RequestParam Long kategoriId,
-                                @RequestParam BigDecimal beratKg,
+                                @RequestParam("kategoriIds") List<Long> kategoriIds,
+                                @RequestParam("beratKgs") List<BigDecimal> beratKgs,
                                 @RequestParam(required = false) String catatan,
                                 Authentication authentication,
                                 RedirectAttributes redirectAttrs) {
@@ -127,8 +127,17 @@ public class PetugasController {
                 return "redirect:/petugas/setoran";
             }
 
-            Setoran setoran = setoranService.createSetoranSampah(wargaId, kategoriId, beratKg, catatan);
-            setoranService.verifikasiSetoran(setoran.getId(), petugas.getId(), StatusSetoran.DITERIMA, catatan);
+            if (kategoriIds == null || kategoriIds.isEmpty()) {
+                redirectAttrs.addFlashAttribute("error", "Pilih minimal satu kategori sampah");
+                return "redirect:/petugas/setoran";
+            }
+
+            for (int i = 0; i < kategoriIds.size(); i++) {
+                Setoran setoran = setoranService.createSetoranSampah(
+                        wargaId, kategoriIds.get(i), beratKgs.get(i), catatan
+                );
+                setoranService.verifikasiSetoran(setoran.getId(), petugas.getId(), StatusSetoran.DITERIMA, catatan);
+            }
 
             redirectAttrs.addFlashAttribute("success", "Setoran berhasil disimpan dan diverifikasi");
             return "redirect:/petugas/setoran";
