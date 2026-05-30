@@ -21,8 +21,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.example.trashformer.model.KategoriSampah;
 import com.example.trashformer.model.Role;
 import com.example.trashformer.model.Setoran;
+import com.example.trashformer.model.StatusTopup;
+import com.example.trashformer.model.TopupSaldo;
 import com.example.trashformer.model.User;
 import com.example.trashformer.repository.KategoriSampahRepository;
+import com.example.trashformer.service.BankSampahService;
 import com.example.trashformer.service.SetoranService;
 import com.example.trashformer.service.UserService;
 
@@ -33,13 +36,16 @@ public class AdminController {
     private final UserService userService;
     private final SetoranService setoranService;
     private final KategoriSampahRepository kategoriSampahRepository;
+    private final BankSampahService bankSampahService;
 
     public AdminController(UserService userService,
                            SetoranService setoranService,
-                           KategoriSampahRepository kategoriSampahRepository) {
+                           KategoriSampahRepository kategoriSampahRepository,
+                           BankSampahService bankSampahService) {
         this.userService = userService;
         this.setoranService = setoranService;
         this.kategoriSampahRepository = kategoriSampahRepository;
+        this.bankSampahService = bankSampahService;
     }
 
     private void addUserToModel(Authentication authentication, Model model) {
@@ -324,5 +330,50 @@ public class AdminController {
             redirectAttrs.addFlashAttribute("error", "Gagal menghapus kategori");
         }
         return "redirect:/admin/kategori";
+    }
+
+    @GetMapping("/topup")
+    public String topupList(Authentication authentication, Model model) {
+        addUserToModel(authentication, model);
+        List<TopupSaldo> menunggu = bankSampahService.getTopupByStatus(StatusTopup.MENUNGGU);
+        List<TopupSaldo> riwayatDisetujui = bankSampahService.getTopupByStatus(StatusTopup.DISETUJUI);
+        List<TopupSaldo> riwayatDitolak = bankSampahService.getTopupByStatus(StatusTopup.DITOLAK);
+        model.addAttribute("topupList", menunggu);
+        model.addAttribute("riwayatDisetujui", riwayatDisetujui);
+        model.addAttribute("riwayatDitolak", riwayatDitolak);
+        return "admin/topup";
+    }
+
+    @PostMapping("/topup/setujui/{id}")
+    public String setujuiTopup(@PathVariable Long id,
+                               Authentication authentication,
+                               RedirectAttributes redirectAttrs) {
+        try {
+            User admin = userService.getUserByUsername(authentication.getName())
+                    .orElseThrow(() -> new RuntimeException("Admin tidak ditemukan"));
+            bankSampahService.setujuiTopup(id, admin.getId());
+            redirectAttrs.addFlashAttribute("success", "Topup disetujui, saldo warga bertambah");
+            return "redirect:/admin/topup";
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "Gagal menyetujui topup: " + e.getMessage());
+            return "redirect:/admin/topup";
+        }
+    }
+
+    @PostMapping("/topup/tolak/{id}")
+    public String tolakTopup(@PathVariable Long id,
+                             @RequestParam(required = false) String catatan,
+                             Authentication authentication,
+                             RedirectAttributes redirectAttrs) {
+        try {
+            User admin = userService.getUserByUsername(authentication.getName())
+                    .orElseThrow(() -> new RuntimeException("Admin tidak ditemukan"));
+            bankSampahService.tolakTopup(id, admin.getId(), catatan);
+            redirectAttrs.addFlashAttribute("success", "Topup ditolak");
+            return "redirect:/admin/topup";
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "Gagal menolak topup: " + e.getMessage());
+            return "redirect:/admin/topup";
+        }
     }
 }

@@ -22,6 +22,7 @@
                     <li class="nav-item"><a class="nav-link" th:href="@{/admin/kategori}"><i class="fas fa-tag"></i> Kategori Sampah</a></li>
                     <li class="nav-item"><a class="nav-link" th:href="@{/admin/setoran}"><i class="fas fa-boxes"></i> Data Setoran</a></li>
                     <li class="nav-item"><a class="nav-link" th:href="@{/admin/setoran-uang}"><i class="fas fa-money-bill-wave"></i> Setoran Uang</a></li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/admin/topup}"><i class="fas fa-plus-circle"></i> Topup Saldo</a></li>
                 </th:block>
                 <th:block th:if="${#authentication != null && #authentication.authorities.iterator().next().getAuthority() == 'ROLE_PETUGAS'}">
                     <li class="nav-item"><a class="nav-link" th:href="@{/petugas/dashboard}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>

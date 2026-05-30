@@ -28,6 +28,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.example.trashformer.model.KategoriSampah;
 import com.example.trashformer.model.Setoran;
 import com.example.trashformer.model.StatusPembayaran;
+import com.example.trashformer.model.StatusTopup;
 import com.example.trashformer.model.User;
 import com.example.trashformer.repository.KategoriSampahRepository;
 import com.example.trashformer.repository.SetoranRepository;
@@ -93,22 +94,13 @@ public class WargaController {
             List<Setoran> sampahList = allSetoran.stream()
                     .filter(s -> s.getJenisSetoran() == com.example.trashformer.model.JenisSetoran.SAMPAH)
                     .toList();
-            List<Setoran> uangList = allSetoran.stream()
-                    .filter(s -> s.getJenisSetoran() == com.example.trashformer.model.JenisSetoran.UANG)
-                    .toList();
 
             double totalBerat = sampahList.stream()
                     .mapToDouble(s -> s.getBeratKg() != null ? s.getBeratKg().doubleValue() : 0.0)
                     .sum();
 
-            double totalUangDisetor = uangList.stream()
-                    .filter(u -> "SETORAN".equals(u.getJenisUang()))
-                    .mapToDouble(u -> u.getJumlahUang() != null ? u.getJumlahUang().doubleValue() : 0.0)
-                    .sum();
-
             model.addAttribute("totalSampah", (long) totalBerat);
             model.addAttribute("totalSetoran", sampahList.size());
-            model.addAttribute("totalUang", (long) totalUangDisetor);
             model.addAttribute("saldo", bankSampahService.getSaldo(wargaId));
 
             List<Setoran> recent = sampahList.size() > 5 ? sampahList.subList(0, 5) : sampahList;
@@ -376,8 +368,29 @@ public class WargaController {
             model.addAttribute("saldo", bankSampahService.getSaldo(warga.getId()));
             model.addAttribute("riwayatSaldo", bankSampahService.getRiwayatSaldo(warga.getId()));
             model.addAttribute("riwayatPenarikan", bankSampahService.getRiwayatPenarikan(warga.getId()));
+            model.addAttribute("riwayatTopup", bankSampahService.getRiwayatTopup(warga.getId()));
         }
         return "warga/bank-saldo";
+    }
+
+    @PostMapping("/bank-saldo/topup")
+    public String topupSaldo(@RequestParam BigDecimal jumlah,
+                             @RequestParam(required = false) String catatan,
+                             Authentication authentication,
+                             RedirectAttributes redirectAttrs) {
+        try {
+            User warga = getCurrentUser(authentication);
+            if (warga == null) {
+                redirectAttrs.addFlashAttribute("error", "User tidak ditemukan");
+                return "redirect:/warga/bank-saldo";
+            }
+            bankSampahService.requestTopup(warga.getId(), jumlah, catatan);
+            redirectAttrs.addFlashAttribute("success", "Permintaan topup saldo berhasil dikirim, menunggu persetujuan admin");
+            return "redirect:/warga/bank-saldo";
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "Gagal mengirim permintaan: " + e.getMessage());
+            return "redirect:/warga/bank-saldo";
+        }
     }
 
     @PostMapping("/bank-saldo/tarik")

@@ -25,11 +25,16 @@
                         <h2 class="text-success fw-bold" style="font-size:2.5rem;">
                             Rp <span th:text="${#numbers.formatDecimal(saldo, 0, 0)}">0</span>
                         </h2>
-                        <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#tarikModal"
-                                th:if="${saldo > 0}">
-                            <i class="fas fa-hand-holding-usd me-2"></i>Tarik Saldo
-                        </button>
-                        <p class="text-muted small mt-2 mb-0" th:if="${saldo <= 0}">Belum ada saldo. Setor sampah daur ulang untuk mendapatkan saldo!</p>
+                        <div class="d-flex gap-2 justify-content-center mt-3">
+                            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#topupModal">
+                                <i class="fas fa-plus-circle me-2"></i>Topup Saldo
+                            </button>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tarikModal"
+                                    th:if="${saldo > 0}">
+                                <i class="fas fa-hand-holding-usd me-2"></i>Tarik Saldo
+                            </button>
+                        </div>
+                        <p class="text-muted small mt-2 mb-0" th:if="${saldo <= 0}">Belum ada saldo. Setor sampah daur ulang atau ajukan topup untuk mendapatkan saldo!</p>
                     </div>
                 </div>
             </div>
@@ -78,40 +83,124 @@
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header">
-                <i class="fas fa-history me-2"></i>Riwayat Penarikan
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fas fa-history me-2"></i>Riwayat Penarikan
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Jumlah</th>
+                                        <th>Status</th>
+                                        <th>Catatan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="p : ${riwayatPenarikan}">
+                                        <td class="small" th:text="${#temporals.format(p.createdAt, 'dd-MM-yyyy HH:mm')}">01-01-2024</td>
+                                        <td class="fw-semibold" th:text="'Rp ' + ${#numbers.formatDecimal(p.jumlah, 0, 0)}">Rp 50.000</td>
+                                        <td>
+                                            <span class="badge"
+                                                  th:classappend="${p.status.name() == 'DISETUJUI'} ? 'bg-success' : (${p.status.name() == 'DITOLAK'} ? 'bg-danger' : 'bg-warning')"
+                                                  th:text="${p.status.name()}">MENUNGGU</span>
+                                        </td>
+                                        <td class="small" th:text="${p.catatan != null ? p.catatan : '-'}">Catatan</td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(riwayatPenarikan)}">
+                                        <td colspan="4" class="text-center text-muted py-4">
+                                            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                            Belum ada penarikan
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Tanggal</th>
-                                <th>Jumlah</th>
-                                <th>Status</th>
-                                <th>Catatan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="p : ${riwayatPenarikan}">
-                                <td class="small" th:text="${#temporals.format(p.createdAt, 'dd-MM-yyyy HH:mm')}">01-01-2024</td>
-                                <td class="fw-semibold" th:text="'Rp ' + ${#numbers.formatDecimal(p.jumlah, 0, 0)}">Rp 50.000</td>
-                                <td>
-                                    <span class="badge"
-                                          th:classappend="${p.status.name() == 'DISETUJUI'} ? 'bg-success' : (${p.status.name() == 'DITOLAK'} ? 'bg-danger' : 'bg-warning')"
-                                          th:text="${p.status.name()}">MENUNGGU</span>
-                                </td>
-                                <td class="small" th:text="${p.catatan != null ? p.catatan : '-'}">Catatan</td>
-                            </tr>
-                            <tr th:if="${#lists.isEmpty(riwayatPenarikan)}">
-                                <td colspan="4" class="text-center text-muted py-4">
-                                    <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                                    Belum ada penarikan
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fas fa-plus-circle me-2"></i>Riwayat Topup
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Jumlah</th>
+                                        <th>Status</th>
+                                        <th>Catatan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="t : ${riwayatTopup}">
+                                        <td class="small" th:text="${#temporals.format(t.createdAt, 'dd-MM-yyyy HH:mm')}">01-01-2024</td>
+                                        <td class="fw-semibold text-success" th:text="'Rp ' + ${#numbers.formatDecimal(t.jumlah, 0, 0)}">Rp 50.000</td>
+                                        <td>
+                                            <span class="badge"
+                                                  th:classappend="${t.status.name() == 'DISETUJUI'} ? 'bg-success' : (${t.status.name() == 'DITOLAK'} ? 'bg-danger' : 'bg-warning')"
+                                                  th:text="${t.status.name()}">MENUNGGU</span>
+                                        </td>
+                                        <td class="small" th:text="${t.catatan != null ? t.catatan : '-'}">Catatan</td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(riwayatTopup)}">
+                                        <td colspan="4" class="text-center text-muted py-4">
+                                            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                            Belum ada topup
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Topup Saldo -->
+        <div class="modal fade" id="topupModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form th:action="@{/warga/bank-saldo/topup}" method="post">
+                        <div class="modal-header">
+                            <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Topup Saldo</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Saldo Saat Ini</label>
+                                <p class="fw-bold text-success" style="font-size:1.3rem;">
+                                    Rp <span th:text="${#numbers.formatDecimal(saldo, 0, 0)}">0</span>
+                                </p>
+                            </div>
+                            <div class="mb-3">
+                                <label for="jumlahTopup" class="form-label">Jumlah Topup <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">Rp</span>
+                                    <input type="number" class="form-control" id="jumlahTopup" name="jumlah"
+                                           step="1000" min="1000" required placeholder="Masukkan jumlah topup">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="catatanTopup" class="form-label">Catatan</label>
+                                <textarea class="form-control" id="catatanTopup" name="catatan"
+                                          rows="2" placeholder="Catatan (opsional)"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-paper-plane me-1"></i>Ajukan Topup
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

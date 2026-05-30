@@ -13,7 +13,7 @@
         </div>
 
         <div class="row g-4 mb-4">
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="stat-card stat-card-green fade-in">
                     <div>
                         <div class="stat-card-number" th:text="${totalSampah}">0</div>
@@ -22,7 +22,7 @@
                     <i class="fas fa-recycle stat-card-icon"></i>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="stat-card stat-card-blue fade-in">
                     <div>
                         <div class="stat-card-number" th:text="${totalSetoran}">0</div>
@@ -31,16 +31,7 @@
                     <i class="fas fa-boxes stat-card-icon"></i>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="stat-card stat-card-orange fade-in">
-                    <div>
-                        <div class="stat-card-number" th:text="${totalUang}">0</div>
-                        <div class="stat-card-label">Total Uang Disetor</div>
-                    </div>
-                    <i class="fas fa-money-bill-wave stat-card-icon"></i>
-                </div>
-            </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="stat-card stat-card-purple fade-in">
                     <div>
                         <div class="stat-card-number" th:text="${#numbers.formatDecimal(saldo, 0, 0)}">0</div>

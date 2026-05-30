@@ -9,10 +9,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.trashformer.model.PenarikanSaldo;
 import com.example.trashformer.model.SaldoTransaksi;
 import com.example.trashformer.model.StatusPenarikan;
+import com.example.trashformer.model.StatusTopup;
 import com.example.trashformer.model.TipeTransaksi;
+import com.example.trashformer.model.TopupSaldo;
 import com.example.trashformer.model.User;
 import com.example.trashformer.repository.PenarikanSaldoRepository;
 import com.example.trashformer.repository.SaldoTransaksiRepository;
+import com.example.trashformer.repository.TopupSaldoRepository;
 import com.example.trashformer.repository.UserRepository;
 
 @Service
@@ -21,13 +24,16 @@ public class BankSampahService {
     private final UserRepository userRepository;
     private final SaldoTransaksiRepository saldoTransaksiRepository;
     private final PenarikanSaldoRepository penarikanSaldoRepository;
+    private final TopupSaldoRepository topupSaldoRepository;
 
     public BankSampahService(UserRepository userRepository,
                              SaldoTransaksiRepository saldoTransaksiRepository,
-                             PenarikanSaldoRepository penarikanSaldoRepository) {
+                             PenarikanSaldoRepository penarikanSaldoRepository,
+                             TopupSaldoRepository topupSaldoRepository) {
         this.userRepository = userRepository;
         this.saldoTransaksiRepository = saldoTransaksiRepository;
         this.penarikanSaldoRepository = penarikanSaldoRepository;
+        this.topupSaldoRepository = topupSaldoRepository;
     }
 
     @Transactional
@@ -142,5 +148,66 @@ public class BankSampahService {
 
     public List<PenarikanSaldo> getRiwayatPenarikan(Long wargaId) {
         return penarikanSaldoRepository.findByWargaIdOrderByCreatedAtDesc(wargaId);
+    }
+
+    @Transactional
+    public TopupSaldo requestTopup(Long wargaId, BigDecimal jumlah, String catatan) {
+        User warga = userRepository.findById(wargaId)
+                .orElseThrow(() -> new RuntimeException("Warga tidak ditemukan"));
+        if (jumlah == null || jumlah.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Jumlah topup harus lebih dari 0");
+        }
+
+        TopupSaldo t = new TopupSaldo();
+        t.setWarga(warga);
+        t.setJumlah(jumlah);
+        t.setStatus(StatusTopup.MENUNGGU);
+        if (catatan != null && !catatan.trim().isEmpty()) {
+            t.setCatatan(catatan.trim());
+        }
+        return topupSaldoRepository.save(t);
+    }
+
+    @Transactional
+    public TopupSaldo setujuiTopup(Long topupId, Long adminId) {
+        TopupSaldo t = topupSaldoRepository.findById(topupId)
+                .orElseThrow(() -> new RuntimeException("Topup tidak ditemukan"));
+        if (t.getStatus() != StatusTopup.MENUNGGU) {
+            throw new RuntimeException("Topup sudah diproses");
+        }
+        User admin = userRepository.findById(adminId)
+                .orElseThrow(() -> new RuntimeException("Admin tidak ditemukan"));
+
+        kreditSaldo(t.getWarga().getId(), t.getJumlah(), "Topup saldo disetujui oleh admin", null);
+
+        t.setAdmin(admin);
+        t.setStatus(StatusTopup.DISETUJUI);
+        return topupSaldoRepository.save(t);
+    }
+
+    @Transactional
+    public TopupSaldo tolakTopup(Long topupId, Long adminId, String catatan) {
+        TopupSaldo t = topupSaldoRepository.findById(topupId)
+                .orElseThrow(() -> new RuntimeException("Topup tidak ditemukan"));
+        if (t.getStatus() != StatusTopup.MENUNGGU) {
+            throw new RuntimeException("Topup sudah diproses");
+        }
+        User admin = userRepository.findById(adminId)
+                .orElseThrow(() -> new RuntimeException("Admin tidak ditemukan"));
+
+        t.setAdmin(admin);
+        t.setStatus(StatusTopup.DITOLAK);
+        if (catatan != null && !catatan.trim().isEmpty()) {
+            t.setCatatan(catatan.trim());
+        }
+        return topupSaldoRepository.save(t);
+    }
+
+    public List<TopupSaldo> getTopupByStatus(StatusTopup status) {
+        return topupSaldoRepository.findByStatusOrderByCreatedAtDesc(status);
+    }
+
+    public List<TopupSaldo> getRiwayatTopup(Long wargaId) {
+        return topupSaldoRepository.findByWargaIdOrderByCreatedAtDesc(wargaId);
     }
 }
