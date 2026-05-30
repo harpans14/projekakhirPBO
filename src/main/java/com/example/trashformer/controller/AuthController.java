@@ -44,8 +44,18 @@ public class AuthController {
             return "redirect:/register?error";
         }
 
-        if (passwordTrim.length() < 6) {
-            redirectAttrs.addFlashAttribute("error", "Password minimal 6 karakter");
+        if (passwordTrim.length() < 8) {
+            redirectAttrs.addFlashAttribute("error", "Password minimal 8 karakter");
+            return "redirect:/register?error";
+        }
+
+        if (!passwordTrim.matches(".*[A-Z].*")) {
+            redirectAttrs.addFlashAttribute("error", "Password harus mengandung huruf besar");
+            return "redirect:/register?error";
+        }
+
+        if (!passwordTrim.matches(".*[0-9].*")) {
+            redirectAttrs.addFlashAttribute("error", "Password harus mengandung angka");
             return "redirect:/register?error";
         }
 

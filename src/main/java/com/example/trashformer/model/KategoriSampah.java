@@ -27,6 +27,12 @@ public class KategoriSampah {
     @Column(name = "harga_per_kg", precision = 10, scale = 2)
     private BigDecimal hargaPerKg;
 
+    @Column(name = "is_daur_ulang")
+    private Boolean isDaurUlang = false;
+
+    @Column(name = "harga_daur_ulang", precision = 10, scale = 2)
+    private BigDecimal hargaDaurUlang;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
@@ -69,6 +75,11 @@ public class KategoriSampah {
     public void setHargaPerKg(BigDecimal hargaPerKg) {
         this.hargaPerKg = hargaPerKg;
     }
+
+    public Boolean getIsDaurUlang() { return isDaurUlang; }
+    public void setIsDaurUlang(Boolean isDaurUlang) { this.isDaurUlang = isDaurUlang; }
+    public BigDecimal getHargaDaurUlang() { return hargaDaurUlang; }
+    public void setHargaDaurUlang(BigDecimal hargaDaurUlang) { this.hargaDaurUlang = hargaDaurUlang; }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
