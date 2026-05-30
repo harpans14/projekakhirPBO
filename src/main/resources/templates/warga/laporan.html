@@ -77,6 +77,9 @@
                                           rows="2" placeholder="Misal: sampah ada di depan pagar, tolong dijemput jam 10 pagi"></textarea>
                             </div>
 
+                            <input type="hidden" name="gunakanSaldo" id="gunakanSaldoHidden" value="false">
+                            <input type="hidden" name="jumlahSaldo" id="jumlahSaldoHidden" value="">
+
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-success">
                                     <i class="fas fa-paper-plane me-1"></i>Kirim Laporan
@@ -103,6 +106,14 @@
                             <span class="fw-bold">Total Biaya:</span>
                             <span id="biayaTotal" class="fw-bold text-danger">Rp 0</span>
                         </div>
+                        <div class="d-flex justify-content-between text-success small" id="saldoDigunakanRow" style="display:none;">
+                            <span>Dibayar dari saldo:</span>
+                            <span id="saldoDigunakanText" class="fw-bold">-Rp 0</span>
+                        </div>
+                        <div class="d-flex justify-content-between" id="sisaBayarRow" style="display:none;">
+                            <span class="fw-bold">Sisa Bayar:</span>
+                            <span id="sisaBayarText" class="fw-bold text-danger">Rp 0</span>
+                        </div>
                     </div>
                 </div>
 
@@ -122,6 +133,36 @@
                     </div>
                 </div>
 
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <i class="fas fa-piggy-bank me-2"></i>Saldo Bank Sampah
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <span class="fw-bold">Saldo Saat Ini:</span>
+                            <span class="fw-bold text-success fs-5" id="saldoSaatIni">Rp <span th:text="${#numbers.formatDecimal(saldo, 0, 'COMMA', 0, 'POINT')}">0</span></span>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" id="gunakanSaldoCheck" name="gunakanSaldo" value="true">
+                            <label class="form-check-label fw-medium" for="gunakanSaldoCheck">
+                                Gunakan saldo bank sampah untuk pembayaran
+                            </label>
+                        </div>
+                        <div id="saldoInputPanel" style="display:none;">
+                            <label class="form-label small">Jumlah saldo yang digunakan</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input type="number" class="form-control" id="jumlahSaldoInput" name="jumlahSaldo"
+                                       step="100" min="0" placeholder="0">
+                            </div>
+                            <div class="form-text mt-1">
+                                Maksimal: Rp <span id="maxSaldoText" th:text="${#numbers.formatDecimal(saldo, 0, 'COMMA', 0, 'POINT')}">0</span>
+                                <button type="button" class="btn btn-link btn-sm p-0 ms-1" id="btnMaxSaldo">Gunakan semua</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card">
                     <div class="card-header">
                         <i class="fas fa-info-circle me-2"></i>Informasi
@@ -135,6 +176,10 @@
                             <li class="mb-2">
                                 <i class="fas fa-credit-card text-info me-2"></i>
                                 Wajib mengupload bukti transfer jika ada sampah biasa (non-daur ulang).
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-piggy-bank text-warning me-2"></i>
+                                Saldo bank sampah bisa digunakan untuk membayar biaya pembuangan sampah biasa.
                             </li>
                             <li class="mb-2">
                                 <i class="fas fa-recycle text-success me-2"></i>
@@ -181,27 +226,7 @@
             });
 
             function cekSemuaDaurUlang() {
-                var rows = container.querySelectorAll('.item-row');
-                var allDaur = true;
-                var anySelected = false;
-                rows.forEach(function(row) {
-                    var katId = row.querySelector('.kategori-select').value;
-                    if (katId) {
-                        anySelected = true;
-                        if (!daurMap[katId]) {
-                            allDaur = false;
-                        }
-                    }
-                });
-                if (anySelected && allDaur) {
-                    document.getElementById('buktiRequiredLabel').style.display = 'none';
-                    document.getElementById('buktiOptionalLabel').style.display = 'inline';
-                    buktiInput.removeAttribute('required');
-                } else {
-                    document.getElementById('buktiRequiredLabel').style.display = 'inline';
-                    document.getElementById('buktiOptionalLabel').style.display = 'none';
-                    buktiInput.setAttribute('required', 'required');
-                }
+                updateBuktiRequirement();
             }
 
             function hitungTotal() {
@@ -244,7 +269,66 @@
                 document.getElementById('pendapatanItems').innerHTML = pendapatanHtml ||
                     '<div class="text-muted text-center py-3">Belum ada item daur ulang</div>';
                 document.getElementById('pendapatanTotal').textContent = 'Rp ' + pendapatanTotal.toLocaleString('id-ID');
+
+                var saldoCheck = document.getElementById('gunakanSaldoCheck');
+                var jumlahSaldo = parseFloat(document.getElementById('jumlahSaldoInput').value) || 0;
+                var maxSaldo = parseFloat(document.getElementById('maxSaldoText').textContent.replace(/\./g, '').replace(/,/g, '.')) || 0;
+
+                if (saldoCheck.checked && jumlahSaldo > 0 && biayaTotal > 0) {
+                    var saldoPakai = Math.min(jumlahSaldo, biayaTotal);
+                    var sisaBayar = biayaTotal - saldoPakai;
+                    document.getElementById('saldoDigunakanRow').style.display = 'flex';
+                    document.getElementById('saldoDigunakanText').textContent = '-Rp ' + saldoPakai.toLocaleString('id-ID');
+                    document.getElementById('sisaBayarRow').style.display = 'flex';
+                    document.getElementById('sisaBayarText').textContent = 'Rp ' + sisaBayar.toLocaleString('id-ID');
+                    if (sisaBayar <= 0) {
+                        document.getElementById('sisaBayarText').className = 'fw-bold text-success';
+                    } else {
+                        document.getElementById('sisaBayarText').className = 'fw-bold text-danger';
+                    }
+                } else {
+                    document.getElementById('saldoDigunakanRow').style.display = 'none';
+                    document.getElementById('sisaBayarRow').style.display = 'none';
+                }
+
                 cekSemuaDaurUlang();
+            }
+
+            function updateBuktiRequirement() {
+                var rows = container.querySelectorAll('.item-row');
+                var allDaur = true;
+                var anySelected = false;
+                rows.forEach(function(row) {
+                    var katId = row.querySelector('.kategori-select').value;
+                    if (katId) {
+                        anySelected = true;
+                        if (!daurMap[katId]) {
+                            allDaur = false;
+                        }
+                    }
+                });
+
+                var saldoCheck = document.getElementById('gunakanSaldoCheck');
+                var jumlahSaldo = parseFloat(document.getElementById('jumlahSaldoInput').value) || 0;
+                var biayaTotal = 0;
+                rows.forEach(function(row) {
+                    var katId = row.querySelector('.kategori-select').value;
+                    var berat = parseFloat(row.querySelector('.berat-input').value) || 0;
+                    if (katId && berat > 0 && !daurMap[katId]) {
+                        biayaTotal += (hargaBiasaMap[katId] || 0) * berat;
+                    }
+                });
+                var lunasDenganSaldo = saldoCheck.checked && jumlahSaldo > 0 && jumlahSaldo >= biayaTotal;
+
+                if (anySelected && (allDaur || lunasDenganSaldo)) {
+                    document.getElementById('buktiRequiredLabel').style.display = 'none';
+                    document.getElementById('buktiOptionalLabel').style.display = 'inline';
+                    document.getElementById('buktiPembayaran').removeAttribute('required');
+                } else {
+                    document.getElementById('buktiRequiredLabel').style.display = 'inline';
+                    document.getElementById('buktiOptionalLabel').style.display = 'none';
+                    document.getElementById('buktiPembayaran').setAttribute('required', 'required');
+                }
             }
 
             container.addEventListener('change', hitungTotal);
@@ -265,6 +349,46 @@
                 if (rows.length <= 1) return;
                 btn.closest('.item-row').remove();
                 hitungTotal();
+            });
+
+            document.getElementById('gunakanSaldoCheck').addEventListener('change', function() {
+                document.getElementById('saldoInputPanel').style.display = this.checked ? 'block' : 'none';
+                if (!this.checked) {
+                    document.getElementById('jumlahSaldoInput').value = '';
+                }
+                syncSaldoHiddenFields();
+                hitungTotal();
+            });
+
+            document.getElementById('jumlahSaldoInput').addEventListener('input', function() {
+                syncSaldoHiddenFields();
+                hitungTotal();
+            });
+
+            document.getElementById('btnMaxSaldo').addEventListener('click', function() {
+                var biayaTotal = 0;
+                container.querySelectorAll('.item-row').forEach(function(row) {
+                    var katId = row.querySelector('.kategori-select').value;
+                    var berat = parseFloat(row.querySelector('.berat-input').value) || 0;
+                    if (katId && berat > 0 && !daurMap[katId]) {
+                        biayaTotal += (hargaBiasaMap[katId] || 0) * berat;
+                    }
+                });
+                var maxSaldo = parseFloat(document.getElementById('maxSaldoText').textContent.replace(/\./g, '').replace(/,/g, '.')) || 0;
+                var maxPakai = Math.min(maxSaldo, biayaTotal);
+                document.getElementById('jumlahSaldoInput').value = Math.floor(maxPakai);
+                syncSaldoHiddenFields();
+                hitungTotal();
+            });
+
+            function syncSaldoHiddenFields() {
+                var checked = document.getElementById('gunakanSaldoCheck').checked;
+                document.getElementById('gunakanSaldoHidden').value = checked ? 'true' : 'false';
+                document.getElementById('jumlahSaldoHidden').value = checked ? document.getElementById('jumlahSaldoInput').value : '';
+            }
+
+            document.querySelector('form').addEventListener('submit', function() {
+                syncSaldoHiddenFields();
             });
         });
     </script>

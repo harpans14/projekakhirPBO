@@ -7,12 +7,16 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +27,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.trashformer.model.KategoriSampah;
 import com.example.trashformer.model.Setoran;
+import com.example.trashformer.model.StatusPembayaran;
 import com.example.trashformer.model.User;
 import com.example.trashformer.repository.KategoriSampahRepository;
 import com.example.trashformer.repository.SetoranRepository;
@@ -217,6 +222,7 @@ public class WargaController {
         User warga = getCurrentUser(authentication);
         if (warga != null) {
             model.addAttribute("alamat", warga.getAlamat() != null ? warga.getAlamat() : "");
+            model.addAttribute("saldo", bankSampahService.getSaldo(warga.getId()));
         }
         List<KategoriSampah> kategoriList = kategoriSampahRepository.findAll();
         model.addAttribute("listKategori", kategoriList);
@@ -224,11 +230,14 @@ public class WargaController {
     }
 
     @PostMapping("/laporan/simpan")
+    @Transactional
     public String laporanSimpan(@RequestParam("kategoriIds") List<Long> kategoriIds,
                                 @RequestParam("beratKgs") List<BigDecimal> beratKgs,
                                 @RequestParam(required = false) String alamatJemput,
                                 @RequestParam(required = false) String catatanTambahan,
                                 @RequestParam(value = "buktiPembayaran", required = false) MultipartFile buktiPembayaran,
+                                @RequestParam(defaultValue = "false") boolean gunakanSaldo,
+                                @RequestParam(required = false) BigDecimal jumlahSaldo,
                                 Authentication authentication,
                                 RedirectAttributes redirectAttrs) {
         try {
@@ -243,10 +252,43 @@ public class WargaController {
                 return "redirect:/warga/laporan";
             }
 
-            boolean allDaurUlang = kategoriIds.stream().allMatch(id ->
-                    kategoriSampahRepository.findById(id)
-                            .map(KategoriSampah::getIsDaurUlang)
-                            .orElse(false));
+            if (beratKgs == null || kategoriIds.size() != beratKgs.size()) {
+                redirectAttrs.addFlashAttribute("error", "Data berat tidak valid");
+                return "redirect:/warga/laporan";
+            }
+
+            Map<Long, KategoriSampah> kategoriMap = kategoriSampahRepository.findAllById(kategoriIds).stream()
+                    .collect(Collectors.toMap(KategoriSampah::getId, k -> k));
+
+            boolean allDaurUlang = kategoriIds.stream()
+                    .map(kategoriMap::get)
+                    .allMatch(k -> k != null && Boolean.TRUE.equals(k.getIsDaurUlang()));
+
+            BigDecimal totalBiaya = BigDecimal.ZERO;
+            for (int i = 0; i < kategoriIds.size(); i++) {
+                KategoriSampah k = kategoriMap.get(kategoriIds.get(i));
+                if (k != null && !Boolean.TRUE.equals(k.getIsDaurUlang())) {
+                    BigDecimal harga = k.getHargaPerKg() != null ? k.getHargaPerKg() : BigDecimal.ZERO;
+                    totalBiaya = totalBiaya.add(beratKgs.get(i).multiply(harga));
+                }
+            }
+
+            BigDecimal saldoDigunakan = BigDecimal.ZERO;
+            if (gunakanSaldo && jumlahSaldo != null && jumlahSaldo.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal currentSaldo = bankSampahService.getSaldo(warga.getId());
+                if (jumlahSaldo.compareTo(currentSaldo) > 0) {
+                    redirectAttrs.addFlashAttribute("error", "Saldo bank sampah tidak mencukupi");
+                    return "redirect:/warga/laporan";
+                }
+                if (jumlahSaldo.compareTo(totalBiaya) > 0) {
+                    redirectAttrs.addFlashAttribute("error", "Jumlah saldo melebihi total biaya");
+                    return "redirect:/warga/laporan";
+                }
+                saldoDigunakan = jumlahSaldo;
+            }
+
+            BigDecimal sisaBayar = totalBiaya.subtract(saldoDigunakan);
+            boolean lunasDenganSaldo = sisaBayar.compareTo(BigDecimal.ZERO) <= 0;
 
             String fileName = null;
             if (buktiPembayaran != null && !buktiPembayaran.isEmpty()) {
@@ -258,7 +300,8 @@ public class WargaController {
                         return "redirect:/warga/laporan";
                     }
                     String extension = originalName.substring(dotIndex).toLowerCase();
-                    if (!".jpg.jpeg.png.gif.bmp".contains(extension)) {
+                    Set<String> allowedExtensions = Set.of(".jpg", ".jpeg", ".png", ".gif", ".bmp");
+                    if (!allowedExtensions.contains(extension)) {
                         redirectAttrs.addFlashAttribute("error", "Format file tidak didukung. Gunakan JPG, PNG, GIF, atau BMP");
                         return "redirect:/warga/laporan";
                     }
@@ -270,17 +313,21 @@ public class WargaController {
                 }
             }
 
-            if (!allDaurUlang && fileName == null) {
-                redirectAttrs.addFlashAttribute("error", "Bukti pembayaran wajib diunggah");
+            if (!allDaurUlang && fileName == null && !lunasDenganSaldo) {
+                redirectAttrs.addFlashAttribute("error", "Bukti pembayaran wajib diunggah untuk sisa biaya sebesar Rp " + sisaBayar);
                 return "redirect:/warga/laporan";
+            }
+
+            if (saldoDigunakan.compareTo(BigDecimal.ZERO) > 0) {
+                bankSampahService.debitSaldo(warga.getId(), saldoDigunakan,
+                        "Pembayaran setoran sampah (Rp " + saldoDigunakan + " dari Rp " + totalBiaya + ")");
             }
 
             boolean hasDaurUlang = false;
             boolean hasBiasa = false;
             for (int i = 0; i < kategoriIds.size(); i++) {
-                boolean isDaurUlang = kategoriSampahRepository.findById(kategoriIds.get(i))
-                        .map(KategoriSampah::getIsDaurUlang)
-                        .orElse(false);
+                KategoriSampah kategori = kategoriMap.get(kategoriIds.get(i));
+                boolean isDaurUlang = kategori != null && Boolean.TRUE.equals(kategori.getIsDaurUlang());
                 if (isDaurUlang) {
                     hasDaurUlang = true;
                     setoranService.createSetoranSampahWarga(
@@ -288,14 +335,25 @@ public class WargaController {
                             alamatJemput, catatanTambahan, null);
                 } else {
                     hasBiasa = true;
-                    setoranService.createSetoranSampahWarga(
+                    String bukti = lunasDenganSaldo ? null : fileName;
+                    Setoran setoran = setoranService.createSetoranSampahWarga(
                             warga.getId(), kategoriIds.get(i), beratKgs.get(i),
-                            alamatJemput, catatanTambahan, fileName);
+                            alamatJemput, catatanTambahan, bukti);
+                    if (lunasDenganSaldo) {
+                        setoran.setStatusPembayaran(StatusPembayaran.DISETUJUI);
+                        setoranRepository.save(setoran);
+                    }
                 }
             }
 
             String msg;
-            if (hasDaurUlang && !hasBiasa) {
+            if (lunasDenganSaldo && saldoDigunakan.compareTo(BigDecimal.ZERO) > 0) {
+                if (hasDaurUlang) {
+                    msg = "Pembayaran lunas menggunakan saldo bank sampah. Setoran daur ulang menunggu verifikasi petugas";
+                } else {
+                    msg = "Pembayaran lunas menggunakan saldo bank sampah. Petugas akan segera menjemput sampah Anda";
+                }
+            } else if (hasDaurUlang && !hasBiasa) {
                 msg = "Setoran daur ulang berhasil dikirim, menunggu verifikasi petugas";
             } else if (hasDaurUlang) {
                 msg = "Laporan berhasil dikirim. Setoran biasa menunggu verifikasi pembayaran, setoran daur ulang menunggu verifikasi petugas";
