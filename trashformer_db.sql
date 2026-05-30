@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: May 18, 2026 at 03:12 AM
+-- Host: localhost
+-- Generation Time: May 29, 2026 at 04:49 PM
 -- Server version: 10.4.32-MariaDB
--- PHP Version: 8.1.25
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -20,8 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `trashformer_db`
 --
-CREATE DATABASE IF NOT EXISTS `trashformer_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-USE `trashformer_db`;
 
 -- --------------------------------------------------------
 
@@ -37,6 +35,15 @@ CREATE TABLE `kategori_sampah` (
   `nama` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `kategori_sampah`
+--
+
+INSERT INTO `kategori_sampah` (`id`, `created_at`, `deskripsi`, `harga_per_kg`, `nama`) VALUES
+(1, '2026-05-23 12:04:17.000000', NULL, 1000.00, 'B3'),
+(2, '2026-05-23 12:28:45.000000', NULL, 1500.00, 'Plastik'),
+(3, '2026-05-23 12:28:55.000000', NULL, 500.00, 'organik');
+
 -- --------------------------------------------------------
 
 --
@@ -45,57 +52,36 @@ CREATE TABLE `kategori_sampah` (
 
 CREATE TABLE `setoran` (
   `id` bigint(20) NOT NULL,
-  `user_id` bigint(20) NOT NULL,
   `jenis_setoran` enum('SAMPAH','UANG') NOT NULL,
-  `jenis_sampah` enum('ORGANIK','B3','ANORGANIK') DEFAULT NULL,
-  `berat_kg` double DEFAULT NULL,
+  `warga_id` bigint(20) NOT NULL,
+  `petugas_id` bigint(20) DEFAULT NULL,
+  `kategori_id` bigint(20) DEFAULT NULL,
+  `berat_kg` decimal(10,2) DEFAULT NULL,
+  `total_harga` decimal(12,2) DEFAULT NULL,
+  `status` enum('MENUNGGU','DITERIMA','DITOLAK') DEFAULT NULL,
+  `alamat_jemput` varchar(255) DEFAULT NULL,
+  `bukti_pembayaran` varchar(255) DEFAULT NULL,
+  `status_pembayaran` enum('MENUNGGU_VERIFIKASI','DISETUJUI','DITOLAK') DEFAULT NULL,
+  `status_penjemputan` enum('DIJADWALKAN','SEDANG_DIJEMPUT','SELESAI') DEFAULT NULL,
   `jumlah_uang` decimal(15,2) DEFAULT NULL,
-  `tanggal` datetime DEFAULT current_timestamp(),
-  `keterangan` text DEFAULT NULL
+  `jenis_uang` varchar(255) DEFAULT NULL,
+  `deskripsi` varchar(255) DEFAULT NULL,
+  `catatan` varchar(255) DEFAULT NULL,
+  `jenis_sampah` enum('ORGANIK','ANORGANIK','B3') DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `setoran`
 --
 
-INSERT INTO `setoran` (`id`, `user_id`, `jenis_setoran`, `jenis_sampah`, `berat_kg`, `jumlah_uang`, `tanggal`, `keterangan`) VALUES
-(1, 3, 'SAMPAH', 'ORGANIK', 5.5, NULL, '2026-05-18 07:24:10', 'Setoran sampah organik'),
-(2, 3, 'UANG', NULL, NULL, 50000.00, '2026-05-18 07:24:10', 'Iuran kebersihan');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `setoran_sampah`
---
-
-CREATE TABLE `setoran_sampah` (
-  `id` bigint(20) NOT NULL,
-  `berat_kg` decimal(10,2) NOT NULL,
-  `catatan` varchar(255) DEFAULT NULL,
-  `created_at` datetime(6) DEFAULT NULL,
-  `status` enum('DITERIMA','DITOLAK','MENUNGGU') NOT NULL,
-  `total_harga` decimal(12,2) DEFAULT NULL,
-  `updated_at` datetime(6) DEFAULT NULL,
-  `kategori_id` bigint(20) NOT NULL,
-  `petugas_id` bigint(20) DEFAULT NULL,
-  `warga_id` bigint(20) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `setoran_uang`
---
-
-CREATE TABLE `setoran_uang` (
-  `id` bigint(20) NOT NULL,
-  `created_at` datetime(6) DEFAULT NULL,
-  `deskripsi` varchar(255) DEFAULT NULL,
-  `jenis` varchar(255) NOT NULL,
-  `jumlah` decimal(12,2) NOT NULL,
-  `petugas_id` bigint(20) DEFAULT NULL,
-  `warga_id` bigint(20) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+INSERT INTO `setoran` (`id`, `jenis_setoran`, `warga_id`, `petugas_id`, `kategori_id`, `berat_kg`, `total_harga`, `status`, `alamat_jemput`, `bukti_pembayaran`, `status_pembayaran`, `status_penjemputan`, `jumlah_uang`, `jenis_uang`, `deskripsi`, `catatan`, `jenis_sampah`, `created_at`, `updated_at`) VALUES
+(1, 'SAMPAH', 3, NULL, NULL, 5.50, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Setoran sampah organik', 'ORGANIK', '2026-05-18 07:24:10.000000', NULL),
+(2, 'UANG', 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 50000.00, NULL, NULL, 'Iuran kebersihan', NULL, '2026-05-18 07:24:10.000000', NULL),
+(3, 'SAMPAH', 4, 2, 1, 4.00, 4000.00, 'DITERIMA', NULL, NULL, 'DISETUJUI', 'SELESAI', NULL, NULL, NULL, 'sampah', NULL, '2026-05-23 12:04:57.000000', '2026-05-23 12:07:06.000000'),
+(4, 'SAMPAH', 4, 2, 1, 4.00, 4000.00, 'DITERIMA', 'katapang', '601f7be3-243e-4eb9-ac50-b3abe2fbc213.jpg', 'DISETUJUI', 'SELESAI', NULL, NULL, NULL, 'haha', NULL, '2026-05-23 12:06:19.000000', '2026-05-23 12:07:09.000000'),
+(6, 'SAMPAH', 4, 2, 1, 6.00, 6000.00, 'DITERIMA', 'rancaekek', 'eefbb088-0c23-4b6d-898a-83371813f4a0.jpg', 'DISETUJUI', 'SELESAI', NULL, NULL, NULL, 'yfyfy', NULL, '2026-05-23 12:27:40.000000', '2026-05-23 12:28:07.000000');
 
 -- --------------------------------------------------------
 
@@ -121,10 +107,10 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `nama`, `username`, `password`, `role`, `created_at`, `updated_at`, `alamat`, `is_active`, `no_telepon`) VALUES
-(1, 'Administrator', 'admin', '$2a$10$C/zMmLRMy.hva282Zyg7O.GPZEY9mrzk1N8lzjITvAbOr84CEzfl2', 'ADMIN', NULL, NULL, NULL, NULL, NULL),
-(2, 'Petugas Sampah', 'petugas', '$2a$10$C/zMmLRMy.hva282Zyg7O.GPZEY9mrzk1N8lzjITvAbOr84CEzfl2', 'PETUGAS', NULL, NULL, NULL, NULL, NULL),
-(3, 'Budi Warga', 'warga', '$2a$10$C/zMmLRMy.hva282Zyg7O.GPZEY9mrzk1N8lzjITvAbOr84CEzfl2', 'WARGA', NULL, NULL, NULL, NULL, NULL),
-(4, 'harpan', 'harpan', '$2a$10$wOhX0MQXSx30U5RqqHydy.r7bACY0dB5hKyWDYNaEl8OMvN9jC8Wy', 'WARGA', '2026-05-18 07:35:45.000000', '2026-05-18 07:35:45.000000', NULL, NULL, NULL),
+(1, 'Administrator', 'admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'ADMIN', NULL, NULL, NULL, b'1', NULL),
+(2, 'Petugas Sampah', 'petugas', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'PETUGAS', NULL, NULL, NULL, b'1', NULL),
+(3, 'Budi Warga', 'warga', '$2a$10$C/zMmLRMy.hva282Zyg7O.GPZEY9mrzk1N8lzjITvAbOr84CEzfl2', 'WARGA', NULL, NULL, NULL, b'1', NULL),
+(4, 'harpan', 'harpan', '$2a$10$wOhX0MQXSx30U5RqqHydy.r7bACY0dB5hKyWDYNaEl8OMvN9jC8Wy', 'WARGA', '2026-05-18 07:35:45.000000', '2026-05-18 07:35:45.000000', NULL, b'1', NULL),
 (5, 'harpan', 'harpan12', '$2a$10$32R5UVeI2uRA.eG0KlrN9eX2KQsT7ASrwyG1.O05wW51EnNqPldvq', 'WARGA', '2026-05-18 07:54:28.000000', '2026-05-18 07:54:28.000000', NULL, b'1', NULL);
 
 --
@@ -143,24 +129,9 @@ ALTER TABLE `kategori_sampah`
 --
 ALTER TABLE `setoran`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_user_setoran` (`user_id`);
-
---
--- Indexes for table `setoran_sampah`
---
-ALTER TABLE `setoran_sampah`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FK5adcr2dvec9dihdewotbbv6eh` (`kategori_id`),
-  ADD KEY `FK95rqd395x6b686y4ybkwylshf` (`petugas_id`),
-  ADD KEY `FK3kh4dyn61ol28wr5r8llb1xgy` (`warga_id`);
-
---
--- Indexes for table `setoran_uang`
---
-ALTER TABLE `setoran_uang`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `FK9katllu10g7l1v0ii5tbjti68` (`petugas_id`),
-  ADD KEY `FKq0d2xoq2w3b2wavayhl3rqlwa` (`warga_id`);
+  ADD KEY `fk_warga` (`warga_id`),
+  ADD KEY `fk_petugas` (`petugas_id`),
+  ADD KEY `fk_kategori` (`kategori_id`);
 
 --
 -- Indexes for table `users`
@@ -177,31 +148,19 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `kategori_sampah`
 --
 ALTER TABLE `kategori_sampah`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `setoran`
 --
 ALTER TABLE `setoran`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `setoran_sampah`
---
-ALTER TABLE `setoran_sampah`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `setoran_uang`
---
-ALTER TABLE `setoran_uang`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Constraints for dumped tables
@@ -211,22 +170,9 @@ ALTER TABLE `users`
 -- Constraints for table `setoran`
 --
 ALTER TABLE `setoran`
-  ADD CONSTRAINT `fk_user_setoran` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `setoran_sampah`
---
-ALTER TABLE `setoran_sampah`
-  ADD CONSTRAINT `FK3kh4dyn61ol28wr5r8llb1xgy` FOREIGN KEY (`warga_id`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `FK5adcr2dvec9dihdewotbbv6eh` FOREIGN KEY (`kategori_id`) REFERENCES `kategori_sampah` (`id`),
-  ADD CONSTRAINT `FK95rqd395x6b686y4ybkwylshf` FOREIGN KEY (`petugas_id`) REFERENCES `users` (`id`);
-
---
--- Constraints for table `setoran_uang`
---
-ALTER TABLE `setoran_uang`
-  ADD CONSTRAINT `FK9katllu10g7l1v0ii5tbjti68` FOREIGN KEY (`petugas_id`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `FKq0d2xoq2w3b2wavayhl3rqlwa` FOREIGN KEY (`warga_id`) REFERENCES `users` (`id`);
+  ADD CONSTRAINT `fk_setoran_kategori` FOREIGN KEY (`kategori_id`) REFERENCES `kategori_sampah` (`id`),
+  ADD CONSTRAINT `fk_setoran_petugas` FOREIGN KEY (`petugas_id`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `fk_setoran_warga` FOREIGN KEY (`warga_id`) REFERENCES `users` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

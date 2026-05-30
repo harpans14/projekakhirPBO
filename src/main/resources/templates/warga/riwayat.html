@@ -41,23 +41,23 @@
                                 <tbody>
                                     <tr th:each="s, stat : ${setoranList}">
                                         <td th:text="${stat.count}">1</td>
-                                        <td th:text="${s.kategori.nama}">ORGANIK</td>
+                                        <td th:text="${s.kategori != null ? s.kategori.nama : '-'}">ORGANIK</td>
                                         <td th:text="${s.beratKg}">5.0</td>
                                         <td th:text="${s.totalHarga}">Rp 10.000</td>
                                         <td>
                                             <span class="badge"
-                                                  th:classappend="${s.status.name() == 'DITERIMA'} ? 'bg-success' : (${s.status.name() == 'MENUNGGU'} ? 'bg-warning' : 'bg-danger')"
-                                                  th:text="${s.status.name()}">DITERIMA</span>
+                                                  th:classappend="${s.status?.name() == 'DITERIMA'} ? 'bg-success' : (${s.status?.name() == 'MENUNGGU'} ? 'bg-warning' : 'bg-danger')"
+                                                  th:text="${s.status?.name()}">DITERIMA</span>
                                         </td>
                                         <td>
                                             <span class="badge"
-                                                  th:classappend="${s.statusPembayaran.name() == 'DISETUJUI'} ? 'bg-success' : (${s.statusPembayaran.name() == 'MENUNGGU_VERIFIKASI'} ? 'bg-warning' : 'bg-danger')"
-                                                  th:text="${s.statusPembayaran.name()}">DISETUJUI</span>
+                                                  th:classappend="${s.statusPembayaran?.name() == 'DISETUJUI'} ? 'bg-success' : (${s.statusPembayaran?.name() == 'MENUNGGU_VERIFIKASI'} ? 'bg-warning' : 'bg-danger')"
+                                                  th:text="${s.statusPembayaran?.name()}">DISETUJUI</span>
                                         </td>
                                         <td>
                                             <span class="badge"
-                                                  th:classappend="${s.statusPenjemputan.name() == 'SELESAI'} ? 'bg-success' : (${s.statusPenjemputan.name() == 'SEDANG_DIJEMPUT'} ? 'bg-info' : 'bg-secondary')"
-                                                  th:text="${s.statusPenjemputan.name()}">DIJADWALKAN</span>
+                                                  th:classappend="${s.statusPenjemputan?.name() == 'SELESAI'} ? 'bg-success' : (${s.statusPenjemputan?.name() == 'SEDANG_DIJEMPUT'} ? 'bg-info' : 'bg-secondary')"
+                                                  th:text="${s.statusPenjemputan?.name()}">DIJADWALKAN</span>
                                         </td>
                                         <td th:text="${#temporals.format(s.createdAt, 'dd-MM-yyyy')}">2024-01-01</td>
                                     </tr>
@@ -88,8 +88,8 @@
                                 <tbody>
                                     <tr th:each="su, stat : ${setoranUangList}">
                                         <td th:text="${stat.count}">1</td>
-                                        <td th:text="${su.jenis}">Donasi</td>
-                                        <td th:text="${su.jumlah}">Rp 50.000</td>
+                                        <td th:text="${su.jenisUang}">Donasi</td>
+                                        <td th:text="${su.jumlahUang}">Rp 50.000</td>
                                         <td th:text="${su.deskripsi}">Pembayaran sampah</td>
                                         <td th:text="${#temporals.format(su.createdAt, 'dd-MM-yyyy')}">2024-01-01</td>
                                     </tr>

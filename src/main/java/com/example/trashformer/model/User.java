@@ -1,5 +1,6 @@
 package com.example.trashformer.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
@@ -41,6 +42,9 @@ public class User {
 
     @Column(name = "is_active")
     private Boolean isActive = true;
+
+    @Column(precision = 15, scale = 2)
+    private BigDecimal saldo = BigDecimal.ZERO;
 
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -127,6 +131,9 @@ public class User {
     public void setActive(Boolean isActive) {
         this.isActive = isActive;
     }
+
+    public BigDecimal getSaldo() { return saldo; }
+    public void setSaldo(BigDecimal saldo) { this.saldo = saldo; }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
