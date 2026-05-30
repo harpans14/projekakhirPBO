@@ -9,17 +9,24 @@ public class DashboardController {
 
     @GetMapping("/")
     public String home(Authentication authentication) {
-        String role = authentication.getAuthorities()
-                .iterator()
-                .next()
-                .getAuthority();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return "landing";
+        }
+        var authorities = authentication.getAuthorities();
+        if (authorities.isEmpty()) {
+            return "redirect:/login";
+        }
+        String role = authorities.iterator().next().getAuthority();
 
         if (role.equals("ROLE_ADMIN")) {
             return "redirect:/admin/dashboard";
         } else if (role.equals("ROLE_PETUGAS")) {
             return "redirect:/petugas/dashboard";
-        } else {
+        } else if (role.equals("ROLE_WARGA")) {
             return "redirect:/warga/dashboard";
+        } else {
+            return "redirect:/login";
         }
     }
 }
