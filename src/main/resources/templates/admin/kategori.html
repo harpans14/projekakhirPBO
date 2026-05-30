@@ -55,7 +55,7 @@
                             <div class="mb-3" id="hargaDaurUlangGroup" style="display:none;">
                                 <label for="hargaDaurUlang" class="form-label">Harga Daur Ulang per Kg (Rp) <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control" id="hargaDaurUlang" name="hargaDaurUlang"
-                                       step="100" min="0" required
+                                       step="100" min="0" required disabled
                                        placeholder="Contoh: 3000">
                                 <div class="form-text">Harga yang <strong>dibayarkan ke warga</strong> per kilogram untuk setoran daur ulang.</div>
                             </div>
@@ -132,6 +132,8 @@
             document.getElementById('hargaBiasaGroup').style.display = daur ? 'none' : 'block';
             document.getElementById('hargaPerKg').required = !daur;
             document.getElementById('hargaDaurUlang').required = daur;
+            document.getElementById('hargaPerKg').disabled = daur;
+            document.getElementById('hargaDaurUlang').disabled = !daur;
         });
     </script>
 </body>

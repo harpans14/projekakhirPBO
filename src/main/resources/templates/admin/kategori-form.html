@@ -34,6 +34,7 @@
                             <label for="hargaPerKg" class="form-label">Harga per Kg (Rp) <span class="text-danger">*</span></label>
                             <input type="number" id="hargaPerKg" name="hargaPerKg" class="form-control"
                                    step="100" min="0" required
+                                   th:disabled="${kategori.isDaurUlang == true}"
                                    th:value="${kategori.hargaPerKg}">
                             <div class="form-text">Biaya yang dibayarkan warga per kilogram untuk pembuangan sampah ini.</div>
                         </div>
@@ -42,6 +43,7 @@
                             <label for="hargaDaurUlang" class="form-label">Harga Daur Ulang per Kg (Rp) <span class="text-danger">*</span></label>
                             <input type="number" id="hargaDaurUlang" name="hargaDaurUlang" class="form-control"
                                    step="100" min="0" required
+                                   th:disabled="${kategori.isDaurUlang != true}"
                                    placeholder="Contoh: 3000"
                                    th:value="${kategori.hargaDaurUlang}">
                             <div class="form-text">Harga yang <strong>dibayarkan ke warga</strong> per kilogram untuk setoran daur ulang.</div>
@@ -66,6 +68,8 @@
             document.getElementById('hargaBiasaGroup').style.display = daur ? 'none' : 'block';
             document.getElementById('hargaPerKg').required = !daur;
             document.getElementById('hargaDaurUlang').required = daur;
+            document.getElementById('hargaPerKg').disabled = daur;
+            document.getElementById('hargaDaurUlang').disabled = !daur;
         });
     </script>
 </body>
