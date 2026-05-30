@@ -7,12 +7,16 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -225,6 +229,7 @@ public class WargaController {
     }
 
     @PostMapping("/laporan/simpan")
+    @Transactional
     public String laporanSimpan(@RequestParam("kategoriIds") List<Long> kategoriIds,
                                 @RequestParam("beratKgs") List<BigDecimal> beratKgs,
                                 @RequestParam(required = false) String alamatJemput,
@@ -244,10 +249,17 @@ public class WargaController {
                 return "redirect:/warga/laporan";
             }
 
-            boolean allDaurUlang = kategoriIds.stream().allMatch(id ->
-                    kategoriSampahRepository.findById(id)
-                            .map(KategoriSampah::getIsDaurUlang)
-                            .orElse(false));
+            if (beratKgs == null || kategoriIds.size() != beratKgs.size()) {
+                redirectAttrs.addFlashAttribute("error", "Data berat tidak valid");
+                return "redirect:/warga/laporan";
+            }
+
+            Map<Long, KategoriSampah> kategoriMap = kategoriSampahRepository.findAllById(kategoriIds).stream()
+                    .collect(Collectors.toMap(KategoriSampah::getId, k -> k));
+
+            boolean allDaurUlang = kategoriIds.stream()
+                    .map(kategoriMap::get)
+                    .allMatch(k -> k != null && Boolean.TRUE.equals(k.getIsDaurUlang()));
 
             String fileName = null;
             if (buktiPembayaran != null && !buktiPembayaran.isEmpty()) {
@@ -259,7 +271,8 @@ public class WargaController {
                         return "redirect:/warga/laporan";
                     }
                     String extension = originalName.substring(dotIndex).toLowerCase();
-                    if (!".jpg.jpeg.png.gif.bmp".contains(extension)) {
+                    Set<String> allowedExtensions = Set.of(".jpg", ".jpeg", ".png", ".gif", ".bmp");
+                    if (!allowedExtensions.contains(extension)) {
                         redirectAttrs.addFlashAttribute("error", "Format file tidak didukung. Gunakan JPG, PNG, GIF, atau BMP");
                         return "redirect:/warga/laporan";
                     }
@@ -279,9 +292,8 @@ public class WargaController {
             boolean hasDaurUlang = false;
             boolean hasBiasa = false;
             for (int i = 0; i < kategoriIds.size(); i++) {
-                boolean isDaurUlang = kategoriSampahRepository.findById(kategoriIds.get(i))
-                        .map(KategoriSampah::getIsDaurUlang)
-                        .orElse(false);
+                KategoriSampah kategori = kategoriMap.get(kategoriIds.get(i));
+                boolean isDaurUlang = kategori != null && Boolean.TRUE.equals(kategori.getIsDaurUlang());
                 if (isDaurUlang) {
                     hasDaurUlang = true;
                     setoranService.createSetoranSampahWarga(

@@ -47,6 +47,9 @@ public class SetoranService {
     }
 
     public Setoran createSetoranSampah(Long wargaId, Long kategoriId, BigDecimal beratKg, String catatan) {
+        if (beratKg == null || beratKg.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Berat harus diisi dengan nilai positif");
+        }
         User warga = userRepository.findById(wargaId)
                 .orElseThrow(() -> new RuntimeException("Warga tidak ditemukan"));
         KategoriSampah kategori = kategoriSampahRepository.findById(kategoriId)
@@ -72,6 +75,9 @@ public class SetoranService {
 
     public Setoran createSetoranSampahWarga(Long wargaId, Long kategoriId, BigDecimal beratKg,
                                              String alamatJemput, String catatan, String buktiPembayaran) {
+        if (beratKg == null || beratKg.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Berat harus diisi dengan nilai positif");
+        }
         User warga = userRepository.findById(wargaId)
                 .orElseThrow(() -> new RuntimeException("Warga tidak ditemukan"));
         KategoriSampah kategori = kategoriSampahRepository.findById(kategoriId)

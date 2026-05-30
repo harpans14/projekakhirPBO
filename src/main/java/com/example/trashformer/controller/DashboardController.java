@@ -9,10 +9,11 @@ public class DashboardController {
 
     @GetMapping("/")
     public String home(Authentication authentication) {
-        String role = authentication.getAuthorities()
-                .iterator()
-                .next()
-                .getAuthority();
+        var authorities = authentication.getAuthorities();
+        if (authorities.isEmpty()) {
+            return "redirect:/login";
+        }
+        String role = authorities.iterator().next().getAuthority();
 
         if (role.equals("ROLE_ADMIN")) {
             return "redirect:/admin/dashboard";

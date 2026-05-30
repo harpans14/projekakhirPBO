@@ -1,6 +1,7 @@
 package com.example.trashformer.controller;
 
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -198,12 +199,23 @@ public class AdminController {
     @GetMapping("/users/reset-password/{id}")
     public String resetPassword(@PathVariable Long id, RedirectAttributes redirectAttrs) {
         try {
-            userService.resetPassword(id, "123456");
-            redirectAttrs.addFlashAttribute("success", "Password berhasil direset ke 123456");
+            String newPassword = generateRandomPassword();
+            userService.resetPassword(id, newPassword);
+            redirectAttrs.addFlashAttribute("success", "Password berhasil direset ke: " + newPassword);
         } catch (Exception e) {
             redirectAttrs.addFlashAttribute("error", "Gagal mereset password");
         }
         return "redirect:/admin/users";
+    }
+
+    private String generateRandomPassword() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(10);
+        for (int i = 0; i < 10; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
     @GetMapping("/users/toggle/{id}")
@@ -251,14 +263,22 @@ public class AdminController {
             return "redirect:/admin/kategori";
         }
 
+        if (!isDaurUlang && (hargaPerKg == null || hargaPerKg.compareTo(BigDecimal.ZERO) <= 0)) {
+            redirectAttrs.addFlashAttribute("error", "Harga per kg harus diisi dengan nilai positif");
+            return "redirect:/admin/kategori";
+        }
+
+        if (isDaurUlang && (hargaDaurUlang == null || hargaDaurUlang.compareTo(BigDecimal.ZERO) <= 0)) {
+            redirectAttrs.addFlashAttribute("error", "Harga daur ulang harus diisi dengan nilai positif");
+            return "redirect:/admin/kategori";
+        }
+
         try {
             KategoriSampah kategori = new KategoriSampah();
             kategori.setNama(namaTrim);
-            if (hargaPerKg != null) {
-                kategori.setHargaPerKg(hargaPerKg);
-            }
+            kategori.setHargaPerKg(hargaPerKg);
             kategori.setIsDaurUlang(isDaurUlang);
-            if (isDaurUlang && hargaDaurUlang != null) {
+            if (isDaurUlang) {
                 kategori.setHargaDaurUlang(hargaDaurUlang);
             }
             kategoriSampahRepository.save(kategori);
@@ -268,7 +288,7 @@ public class AdminController {
         } catch (Exception e) {
             redirectAttrs.addFlashAttribute("error", "Gagal menambahkan kategori");
         }
-        return "redirect:/admin/kategori?suksesTambah";
+        return "redirect:/admin/kategori";
     }
 
     @GetMapping("/kategori/edit/{id}")
@@ -293,13 +313,23 @@ public class AdminController {
             return "redirect:/admin/kategori/edit/" + id;
         }
 
+        if (!isDaurUlang && (hargaPerKg == null || hargaPerKg.compareTo(BigDecimal.ZERO) <= 0)) {
+            redirectAttrs.addFlashAttribute("error", "Harga per kg harus diisi dengan nilai positif");
+            return "redirect:/admin/kategori/edit/" + id;
+        }
+
+        if (isDaurUlang && (hargaDaurUlang == null || hargaDaurUlang.compareTo(BigDecimal.ZERO) <= 0)) {
+            redirectAttrs.addFlashAttribute("error", "Harga daur ulang harus diisi dengan nilai positif");
+            return "redirect:/admin/kategori/edit/" + id;
+        }
+
         try {
             KategoriSampah kategori = kategoriSampahRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Kategori tidak ditemukan"));
             kategori.setNama(namaTrim);
             kategori.setHargaPerKg(hargaPerKg);
             kategori.setIsDaurUlang(isDaurUlang);
-            if (isDaurUlang && hargaDaurUlang != null) {
+            if (isDaurUlang) {
                 kategori.setHargaDaurUlang(hargaDaurUlang);
             } else {
                 kategori.setHargaDaurUlang(null);

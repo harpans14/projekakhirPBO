@@ -1,10 +1,14 @@
 package com.example.trashformer.controller;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -70,9 +74,12 @@ public class PetugasController {
         addUserToModel(authentication, model);
         User petugas = getCurrentUser(authentication);
         if (petugas != null) {
+            LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+            LocalDateTime todayEnd = LocalDate.now().atTime(LocalTime.MAX);
+            long setoranHariIni = setoranRepository.countByCreatedAtBetween(todayStart, todayEnd);
+
             List<Setoran> allByPetugas = setoranService.getSetoranByPetugas(petugas.getId());
             long totalVerified = allByPetugas.size();
-            long totalMenunggu = setoranRepository.countByStatus(StatusSetoran.MENUNGGU);
             double totalBerat = allByPetugas.stream()
                     .filter(s -> s.getStatus() == StatusSetoran.DITERIMA)
                     .mapToDouble(s -> s.getBeratKg() != null ? s.getBeratKg().doubleValue() : 0.0)
@@ -80,13 +87,12 @@ public class PetugasController {
 
             long pembayaranMenunggu = setoranRepository.countByStatusPembayaran(StatusPembayaran.MENUNGGU_VERIFIKASI);
 
-            model.addAttribute("setoranHariIni", totalMenunggu + totalVerified);
+            model.addAttribute("setoranHariIni", setoranHariIni);
             model.addAttribute("wargaDibantu", totalVerified);
             model.addAttribute("totalSampah", (long) totalBerat);
             model.addAttribute("pembayaranMenunggu", pembayaranMenunggu);
 
-            List<Setoran> allSetoran = setoranService.getAllSetoranSampah();
-            List<Setoran> recent = allSetoran.size() > 5 ? allSetoran.subList(0, 5) : allSetoran;
+            List<Setoran> recent = allByPetugas.size() > 5 ? allByPetugas.subList(0, 5) : allByPetugas;
             model.addAttribute("recentSetoran", recent);
         }
         return "petugas/dashboard";
@@ -120,6 +126,7 @@ public class PetugasController {
     }
 
     @PostMapping("/setoran/simpan")
+    @Transactional
     public String simpanSetoran(@RequestParam Long wargaId,
                                 @RequestParam("kategoriIds") List<Long> kategoriIds,
                                 @RequestParam("beratKgs") List<BigDecimal> beratKgs,
@@ -135,6 +142,11 @@ public class PetugasController {
 
             if (kategoriIds == null || kategoriIds.isEmpty()) {
                 redirectAttrs.addFlashAttribute("error", "Pilih minimal satu kategori sampah");
+                return "redirect:/petugas/setoran";
+            }
+
+            if (beratKgs == null || kategoriIds.size() != beratKgs.size()) {
+                redirectAttrs.addFlashAttribute("error", "Data berat tidak valid");
                 return "redirect:/petugas/setoran";
             }
 

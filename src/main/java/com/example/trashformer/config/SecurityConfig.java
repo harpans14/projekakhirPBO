@@ -33,14 +33,10 @@ public class SecurityConfig {
                                 "/js/**",
                                 "/images/**"
                         ).permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/petugas/**").hasRole("PETUGAS")
                         .requestMatchers("/warga/**").hasRole("WARGA")
                         .anyRequest().authenticated()
-                )
-                .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/h2-console/**")
                 )
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin())
@@ -74,10 +70,12 @@ public class SecurityConfig {
     @Bean
     public AuthenticationSuccessHandler successHandler() {
         return (request, response, authentication) -> {
-            String role = authentication.getAuthorities()
-                    .iterator()
-                    .next()
-                    .getAuthority();
+            var authorities = authentication.getAuthorities();
+            if (authorities.isEmpty()) {
+                response.sendRedirect("/login?error=true");
+                return;
+            }
+            String role = authorities.iterator().next().getAuthority();
 
             if (role.equals("ROLE_ADMIN")) {
                 response.sendRedirect("/admin/dashboard");
