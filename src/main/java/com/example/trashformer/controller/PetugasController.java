@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.trashformer.model.KategoriSampah;
-import com.example.trashformer.model.PenarikanSaldo;
 import com.example.trashformer.model.Role;
 import com.example.trashformer.model.Setoran;
 import com.example.trashformer.model.StatusPembayaran;

@@ -263,12 +263,13 @@ public class AdminController {
             }
             kategoriSampahRepository.save(kategori);
             redirectAttrs.addFlashAttribute("success", "Kategori berhasil ditambahkan");
+            return "redirect:/admin/kategori?suksesTambah";
         } catch (DataIntegrityViolationException e) {
             redirectAttrs.addFlashAttribute("error", "Kategori dengan nama tersebut sudah ada");
         } catch (Exception e) {
             redirectAttrs.addFlashAttribute("error", "Gagal menambahkan kategori");
         }
-        return "redirect:/admin/kategori?suksesTambah";
+        return "redirect:/admin/kategori";
     }
 
     @GetMapping("/kategori/edit/{id}")

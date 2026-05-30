@@ -22,7 +22,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.trashformer.model.KategoriSampah;
-import com.example.trashformer.model.PenarikanSaldo;
 import com.example.trashformer.model.Setoran;
 import com.example.trashformer.model.User;
 import com.example.trashformer.repository.KategoriSampahRepository;
