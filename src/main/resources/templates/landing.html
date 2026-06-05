@@ -42,6 +42,22 @@
             position: relative;
             z-index: 1;
         }
+        .hero-img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 24px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+            transition: all 0.5s ease;
+            animation: heroImgFloat 4s ease-in-out infinite;
+        }
+        .hero-img:hover {
+            transform: scale(1.02);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+        }
+        @keyframes heroImgFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
         .hero-icon {
             font-size: 4rem;
             color: #2ecc71;
@@ -65,9 +81,9 @@
         .hero-subtitle {
             font-size: 1.2rem;
             color: rgba(255, 255, 255, 0.7);
-            max-width: 600px;
-            margin: 0 auto 2rem;
+            max-width: 540px;
             line-height: 1.8;
+            margin-bottom: 2rem;
         }
         .hero-buttons .btn {
             padding: 12px 35px;
@@ -282,6 +298,7 @@
             .section-title { font-size: 1.8rem; }
             .hero-section { min-height: auto; padding: 100px 0 60px; }
             .step-arrow { transform: rotate(90deg); }
+            .hero-img { max-width: 80%; }
         }
         .nav-landing {
             position: fixed;
@@ -376,27 +393,34 @@
 
         <!-- Hero -->
         <section class="hero-section" id="home">
-            <div class="container hero-content text-center">
-                <div class="hero-icon">
-                    <i class="fas fa-recycle"></i>
-                </div>
-                <h1 class="hero-title">Kelola Sampah Jadi <span>Mudah &amp; Menguntungkan</span></h1>
-                <p class="hero-subtitle">
-                    Platform digital untuk pengelolaan sampah terpadu. Setor sampah daur ulang,
-                    pantau setoran, dan nikmati saldo Bank Sampah yang bisa dicairkan kapan saja.
-                </p>
-                <div class="hero-buttons">
-                    <a th:href="@{/register}" class="btn btn-primary btn-lg me-3">
-                        <i class="fas fa-user-plus me-2"></i>Daftar Sekarang
-                    </a>
-                    <a th:href="@{/login}" class="btn btn-outline-light btn-lg">
-                        <i class="fas fa-sign-in-alt me-2"></i>Login
-                    </a>
-                </div>
-                <div class="role-badge-group mt-4">
-                    <span class="role-badge admin"><i class="fas fa-shield-alt me-1"></i>Admin</span>
-                    <span class="role-badge petugas"><i class="fas fa-user-tie me-1"></i>Petugas</span>
-                    <span class="role-badge warga"><i class="fas fa-user me-1"></i>Warga</span>
+            <div class="container hero-content">
+                <div class="row align-items-center">
+                    <div class="col-lg-6 text-center text-lg-start">
+                        <div class="hero-icon">
+                            <i class="fas fa-recycle"></i>
+                        </div>
+                        <h1 class="hero-title">Kelola Sampah Jadi <span>Mudah &amp; Menguntungkan</span></h1>
+                        <p class="hero-subtitle mx-auto mx-lg-0">
+                            Platform digital untuk pengelolaan sampah terpadu. Setor sampah daur ulang,
+                            pantau setoran, dan nikmati saldo Bank Sampah yang bisa dicairkan kapan saja.
+                        </p>
+                        <div class="hero-buttons">
+                            <a th:href="@{/register}" class="btn btn-primary btn-lg me-3 mb-2 mb-md-0">
+                                <i class="fas fa-user-plus me-2"></i>Daftar Sekarang
+                            </a>
+                            <a th:href="@{/login}" class="btn btn-outline-light btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login
+                            </a>
+                        </div>
+                        <div class="role-badge-group mt-4 justify-content-center justify-content-lg-start">
+                            <span class="role-badge admin"><i class="fas fa-shield-alt me-1"></i>Admin</span>
+                            <span class="role-badge petugas"><i class="fas fa-user-tie me-1"></i>Petugas</span>
+                            <span class="role-badge warga"><i class="fas fa-user me-1"></i>Warga</span>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 text-center mt-5 mt-lg-0">
+                        <img th:src="@{/images/trashformer.jpg}" alt="Trashformer" class="hero-img">
+                    </div>
                 </div>
             </div>
             <div class="hero-waves">
