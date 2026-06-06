@@ -4,6 +4,13 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+# Runtime data (uploads) - tidak ikut version control
+uploads/
+
+# Logs
+*.log
+hs_err_pid*.log
+
 ### STS ###
 .apt_generated
 .classpath
