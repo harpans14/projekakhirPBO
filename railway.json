@@ -1,10 +1,11 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
-    "builder": "NIXPACKS"
+    "builder": "NIXPACKS",
+    "buildCommand": "./mvnw clean package -DskipTests"
   },
   "deploy": {
-    "startCommand": "java -jar target/trashformer-0.0.1-SNAPSHOT.jar",
+    "startCommand": "java -Xmx256m -XX:+UseSerialGC -Djava.security.egd=file:/dev/./urandom -jar target/trashformer-0.0.1-SNAPSHOT.jar",
     "healthcheckPath": "/login",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
